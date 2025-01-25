@@ -1,5 +1,72 @@
 # SkipCast Development Roadmap
 
+## Current Features
+- [x] User Authentication (Register/Login)
+- [x] Social Authentication (Google, Facebook)
+- [x] Channel Management (CRUD operations)
+- [x] Channel State Management (On/Off)
+- [x] Basic Channel Privacy Settings
+- [x] Channel Limits for Free Users
+
+## Upcoming Features
+
+### Phase 1: User Management
+- [ ] Email Verification System
+  - Email verification on registration
+  - Re-verification for email changes
+  - Email verification status indicators
+  - Grace period for unverified accounts
+  - Resend verification emails
+  - Custom verification email templates
+
+### Phase 2: Channel Enhancements
+- [ ] Advanced Channel Features
+  - Channel categories/tags
+  - Channel search and filtering
+  - Channel analytics
+  - Channel scheduling
+  - Channel thumbnails/artwork
+  - Channel playlists
+
+### Phase 3: Social Features
+- [ ] User Interactions
+  - Follow/Unfollow channels
+  - User profiles
+  - Channel comments
+  - Channel ratings
+  - Share channels
+
+### Phase 4: Premium Features
+- [ ] Subscription System
+  - Premium user tiers
+  - Payment integration
+  - Subscription management
+  - Premium-only features
+  - Usage analytics
+
+### Phase 5: Streaming Features
+- [ ] Live Streaming
+  - Real-time broadcasting
+  - Stream chat
+  - Stream recording
+  - Stream metrics
+  - Stream quality options
+
+## Technical Improvements
+- [ ] API Rate Limiting
+- [ ] Caching Implementation
+- [ ] Performance Optimization
+- [ ] API Documentation
+- [ ] Testing Coverage
+- [ ] CI/CD Pipeline
+
+## Security Enhancements
+- [ ] Two-Factor Authentication
+- [ ] Session Management
+- [ ] Security Headers
+- [ ] API Key Management
+- [ ] Request Validation
+
 ## Phase 1: Core Functionality Development
 
 ### 1.1 User Registration and Authentication

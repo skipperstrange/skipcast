@@ -1,6 +1,9 @@
-cuse Illuminate\Http\Request;
+<?php
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChannelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,22 +16,37 @@ use App\Http\Controllers\AuthController;
 |
 */
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_middleware'),
-    'verified'
-])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
+// Test route to verify API is working
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working']);
+});
+
+// Authentication Routes
+Route::controller(AuthController::class)->group(function () {
+    Route::post('/register', 'register');
+    Route::post('/login', 'login');
+    Route::get('/auth/{provider}', 'redirectToProvider');
+    Route::get('/auth/{provider}/callback', 'handleProviderCallback');
+});
+
+// Protected Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::controller(AuthController::class)->group(function () {
+        Route::post('/logout', 'logout');
+    });
+
+    // Channel Routes
+    Route::controller(ChannelController::class)->group(function () {
+        Route::get('/channels', 'index');
+        Route::post('/channels', 'store');
+        Route::get('/channels/{channel}', 'show');
+        Route::put('/channels/{channel}', 'update');
+        Route::delete('/channels/{channel}', 'destroy');
+        Route::put('/channels/{channel}/state', 'updateState');
     });
 });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+// Debugging route
+Route::get('/ping', function () {
+    return 'pong';
 });
-
-// Social Login Routes
-Route::get('/auth/{provider}', [AuthController::class, 'redirectToProvider']);
-Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']); 
