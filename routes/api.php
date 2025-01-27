@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\MediaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('can:manage-state,channel')
             ->name('channels.update-state');
     });
+
+    Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
+    Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
 });
 
 // Debugging route
