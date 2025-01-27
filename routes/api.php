@@ -16,7 +16,7 @@ use App\Http\Controllers\ChannelController;
 |
 */
 
-// Test route to verify API is working
+// Public Routes
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
 });
@@ -29,20 +29,30 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('/auth/{provider}/callback', 'handleProviderCallback');
 });
 
+// Public Channel Routes with optional parameters
+Route::get('/channels', [ChannelController::class, 'index'])
+    ->name('channels.index');
+
+Route::get('/channels/{channel}', [ChannelController::class, 'show'])
+    ->name('channels.show');
+
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::controller(AuthController::class)->group(function () {
-        Route::post('/logout', 'logout');
-    });
+    // Auth Routes
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Channel Routes
+    // Protected Channel Routes
     Route::controller(ChannelController::class)->group(function () {
-        Route::get('/channels', 'index');
-        Route::post('/channels', 'store');
-        Route::get('/channels/{channel}', 'show');
-        Route::put('/channels/{channel}', 'update');
-        Route::delete('/channels/{channel}', 'destroy');
-        Route::put('/channels/{channel}/state', 'updateState');
+        Route::post('/channels', 'store')->name('channels.store');
+        Route::put('/channels/{channel}', 'update')
+            ->middleware('can:update,channel')
+            ->name('channels.update');
+        Route::delete('/channels/{channel}', 'destroy')
+            ->middleware('can:delete,channel')
+            ->name('channels.destroy');
+        Route::put('/channels/{channel}/state', 'updateState')
+            ->middleware('can:manage-state,channel')
+            ->name('channels.update-state');
     });
 });
 

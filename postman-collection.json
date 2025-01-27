@@ -129,17 +129,44 @@
                 "key": "Accept",
                 "value": "application/json",
                 "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/channels",
+              "raw": "{{base_url}}/api/channels?genre=rock&privacy=public&search=music&sort=created_at&order=desc&per_page=15",
               "host": ["{{base_url}}"],
-              "path": ["api", "channels"]
+              "path": ["api", "channels"],
+              "query": [
+                {
+                  "key": "genre",
+                  "value": "rock",
+                  "description": "Filter by genre"
+                },
+                {
+                  "key": "privacy",
+                  "value": "public",
+                  "description": "Filter by privacy setting"
+                },
+                {
+                  "key": "search",
+                  "value": "music",
+                  "description": "Search in name and description"
+                },
+                {
+                  "key": "sort",
+                  "value": "created_at",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "description": "Sort direction (asc/desc)"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15",
+                  "description": "Items per page"
+                }
+              ]
             }
           }
         },
@@ -184,17 +211,19 @@
                 "key": "Accept",
                 "value": "application/json",
                 "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/channels/{{channel_id}}",
+              "raw": "{{base_url}}/api/channels/{{channel_slug}}?with=user",
               "host": ["{{base_url}}"],
-              "path": ["api", "channels", "{{channel_id}}"]
+              "path": ["api", "channels", "{{channel_slug}}"],
+              "query": [
+                {
+                  "key": "with",
+                  "value": "user",
+                  "description": "Include relationships"
+                }
+              ]
             }
           }
         },
@@ -327,8 +356,8 @@
       "value": "your_auth_token_here"
     },
     {
-      "key": "channel_id",
-      "value": "1"
+      "key": "channel_slug",
+      "value": "my-channel-a1b2c3d4"
     }
   ]
 } 

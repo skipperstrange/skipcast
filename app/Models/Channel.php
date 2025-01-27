@@ -10,7 +10,6 @@ class Channel extends Model
 {
     protected $fillable = [
         'name',
-        'slug',
         'description',
         'genre',
         'user_id',
@@ -49,16 +48,25 @@ class Channel extends Model
         parent::boot();
 
         static::creating(function ($channel) {
-            if (! $channel->slug) {
-                $channel->slug = Str::slug($channel->name);
-            }
+            // Generate a unique hash from user_id and name
+            $baseSlug = Str::slug($channel->name);
+            $channel->slug = $channel->generateUniqueSlug($baseSlug);
         });
+    }
 
-        static::updating(function ($channel) {
-            if ($channel->isDirty('name') && ! $channel->isDirty('slug')) {
-                $channel->slug = Str::slug($channel->name);
-            }
-        });
+    /**
+     * Generate a unique slug using user_id and name
+     */
+    protected function generateUniqueSlug(string $baseSlug): string
+    {
+        // Create a unique string combining user_id and slug
+        $uniqueString = $this->user_id . '-' . $baseSlug;
+        
+        // Generate a short hash
+        $hash = substr(md5($uniqueString), 0, 8);
+        
+        // Combine base slug with hash
+        return $baseSlug . '-' . $hash;
     }
 
     public function user(): BelongsTo
@@ -91,11 +99,33 @@ class Channel extends Model
     }
 
     /**
-     * Get channel by slug
+     * Get channel by ID or slug
      */
     public function resolveRouteBinding($value, $field = null)
     {
-        return $this->where('slug', $value)->firstOrFail();
+        // First try to find by slug
+        $channel = $this->where('slug', $value)->first();
+        
+        // If not found by slug, try to find by ID
+        if (!$channel && is_numeric($value)) {
+            $channel = $this->where('id', $value)->first();
+        }
+        
+        // If still not found, throw 404
+        if (!$channel) {
+            abort(404, 'Channel not found');
+        }
+        
+        return $channel;
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        // Default to slug for route model binding
+        return 'slug';
     }
 
     /**

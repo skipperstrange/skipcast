@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->string('genre');
+            $table->string('genre')->nullable()->default('No genre');
             
             // Streaming state (on air/off air)
             $table->enum('state', ['on', 'off'])->default('off');
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->bigInteger('likes')->default(0);
             
             // Listener metrics
-            $table->integer('max_listeners')->default(100);
+            $table->integer('max_listeners')->default(10000);
             $table->integer('current_listeners')->default(0);
             
             $table->timestamps();

@@ -75,6 +75,22 @@ components:
           type: string
           format: date-time
 
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        to:
+          type: integer
+        total:
+          type: integer
+
 paths:
   /register:
     post:
@@ -216,28 +232,56 @@ paths:
     get:
       tags:
         - Channels
-      summary: List all channels
-      security:
-        - bearerAuth: []
+      summary: List channels
+      description: Get a paginated list of active channels
       parameters:
         - in: query
-          name: category
+          name: genre
           schema:
             type: string
+          description: Filter by genre
         - in: query
           name: privacy
           schema:
             type: string
-            enum: [private, public]
+            enum: [public, private]
+          description: Filter by privacy setting
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search in name and description
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Field to sort by
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort direction
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            default: 15
+          description: Items per page
       responses:
         200:
-          description: List of channels
+          description: Successful response
           content:
             application/json:
               schema:
+                type: object
+                properties:
+                  data:
                 type: array
                 items:
                   $ref: '#/components/schemas/Channel'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
 
     post:
       tags:
@@ -272,24 +316,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Channel'
 
-  /channels/{id}:
+  /channels/{channelId}:
     get:
       tags:
         - Channels
       summary: Get channel details
       parameters:
         - in: path
-          name: id
+          name: channelId
           required: true
           schema:
-            type: integer
+            type: string
+          description: Channel ID or slug
+        - in: query
+          name: with
+          schema:
+            type: string
+          description: Comma-separated list of relationships to include
       responses:
         200:
-          description: Channel details
+          description: Successful response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Channel'
+        404:
+          description: Channel not found
 
     put:
       tags:
