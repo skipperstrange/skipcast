@@ -91,6 +91,32 @@ components:
         total:
           type: integer
 
+    Media:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        album:
+          type: string
+        year:
+          type: string
+        artist:
+          type: string
+        public:
+          type: string
+          enum: [public, private]
+        downloadable:
+          type: string
+          enum: [yes, no]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
 paths:
   /register:
     post:
@@ -426,4 +452,88 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Channel' 
+                $ref: '#/components/schemas/Channel'
+
+  /media/upload:
+    post:
+      tags:
+        - Media
+      summary: Upload media file
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - media_file
+              properties:
+                media_file:
+                  type: string
+                  format: binary
+                  description: The media file to upload (audio/video)
+      responses:
+        201:
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        422:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /media/{media}:
+    put:
+      tags:
+        - Media
+      summary: Update media details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                album:
+                  type: string
+                year:
+                  type: string
+                artist:
+                  type: string
+                public:
+                  type: string
+                  enum: [public, private]
+                downloadable:
+                  type: string
+                  enum: [yes, no]
+      responses:
+        200:
+          description: Media updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        404:
+          description: Media not found
+        403:
+          description: Unauthorized to update media 

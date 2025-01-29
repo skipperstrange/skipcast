@@ -4,8 +4,10 @@ namespace Tests\Feature\Api;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Media;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 
 class RouteTest extends TestCase
 {
@@ -159,5 +161,68 @@ class RouteTest extends TestCase
         // Delete channel
         $this->deleteJson("/api/channels/{$channelId}")
             ->assertNoContent();
+    }
+
+    public function test_authenticated_user_can_upload_media(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/media/upload', [
+            'media_file' => UploadedFile::fake()->create('audio.mp3', 5000, 'audio/mpeg'),
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonStructure(['id', 'title', 'artist', 'duration', 'user_id']);
+    }
+
+    public function test_authenticated_user_can_update_media(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $media = Media::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->putJson("/api/media/{$media->id}", [
+            'title' => 'Updated Title',
+            'album' => 'Updated Album',
+            'year' => '2023',
+            'artist' => 'Updated Artist',
+            'public' => 'public',
+            'downloadable' => 'yes',
+        ]);
+
+        $response->assertOk()
+            ->assertJson(['title' => 'Updated Title']);
+    }
+
+    public function test_user_can_soft_delete_media(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $media = Media::factory()->create(['user_id' => $user->id]);
+
+        // Soft delete the media
+        $response = $this->deleteJson("/api/media/{$media->id}");
+        $response->assertNoContent();
+
+        // Assert the media is soft deleted
+        $this->assertSoftDeleted('media', ['id' => $media->id]);
+    }
+
+    public function test_user_can_restore_soft_deleted_media(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $media = Media::factory()->create(['user_id' => $user->id]);
+        $media->delete(); // Soft delete the media
+
+        // Restore the media
+        $media->restore();
+
+        // Assert the media is restored
+        $this->assertDatabaseHas('media', ['id' => $media->id]);
     }
 } 

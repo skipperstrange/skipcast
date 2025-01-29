@@ -10,7 +10,8 @@
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.17",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "plutuss/getid3-laravel": "^1.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

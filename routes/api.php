@@ -56,8 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('channels.update-state');
     });
 
+    // Protected Media Routes
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
+    Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
 });
 
 // Debugging route

@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Channel extends Model
 {
+    use SoftDeletes; // Enable soft deletes
+
     protected $fillable = [
         'name',
         'description',
@@ -142,5 +146,10 @@ class Channel extends Model
     public function incrementLikes(): void
     {
         $this->increment('likes');
+    }
+
+    public function media(): BelongsToMany
+    {
+        return $this->belongsToMany(Media::class, 'channel_media', 'channel_id', 'media_id');
     }
 } 
