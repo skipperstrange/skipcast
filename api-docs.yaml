@@ -300,7 +300,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: object 
                 properties:
                   data:
                 type: array
@@ -536,4 +536,134 @@ paths:
         404:
           description: Media not found
         403:
-          description: Unauthorized to update media 
+          description: Unauthorized to update media
+
+  /channels/{channel_slug}:
+    get:
+      summary: Get Channel with Media and User
+      description: Retrieve a channel along with its associated media and user.
+      parameters:
+        - in: path
+          name: channel_slug
+          required: true
+          type: string
+          description: The slug of the channel to retrieve.
+        - in: query
+          name: with
+          required: false
+          type: string
+          description: Include related user information (set to 'user').
+      responses:
+        '200':
+          description: Channel retrieved successfully.
+        '404':
+          description: Channel not found.
+
+  /media/{media}/channels:
+    post:
+      tags: [Media]
+      summary: Attach media to channels
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        200:
+          description: Media attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /test:
+    get:
+      tags: [Test]
+      summary: Test API connection
+      responses:
+        200:
+          description: API is working
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /channels/{channel}/media:
+    get:
+      tags: [Channels]
+      summary: List media for a channel
+      description: |
+        List media for a channel. 
+        If channel is private, authentication is required.
+        Public media is accessible to all users.
+        Channel owners can access all media, including private.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number for pagination
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        403:
+          description: Unauthorized access to private channel
+
+  /media/{media}:
+    get:
+      tags: [Media]
+      summary: Get media details
+      description: |
+        Get details of a media item. 
+        If media is private, authentication is required.
+        Media owners can access their own private media.
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized access to private media 

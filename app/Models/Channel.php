@@ -56,6 +56,11 @@ class Channel extends Model
             $baseSlug = Str::slug($channel->name);
             $channel->slug = $channel->generateUniqueSlug($baseSlug);
         });
+
+        static::deleting(function ($channel) {
+            // Delete associated channel_media entries
+            $channel->media()->detach();
+        });
     }
 
     /**
@@ -148,8 +153,10 @@ class Channel extends Model
         $this->increment('likes');
     }
 
-    public function media(): BelongsToMany
+    public function media()
     {
-        return $this->belongsToMany(Media::class, 'channel_media', 'channel_id', 'media_id');
+        return $this->belongsToMany(Media::class, 'channel_media')
+            ->withTimestamps()
+            ->withPivot('list_order');
     }
 } 

@@ -217,29 +217,3 @@
 
 ---
 
-## Overview Checklist and To-Do
-
-### Phase 1: Core Functionality
-- [ ] Set up secure user authentication and registration.
-- [ ] Build the channel creation interface and playlist generator.
-- [ ] Implement channel management features (On Air/Off Air, playlist controls).
-- [ ] Integrate Liquidsoap or Icecast for audio streaming.
-- [ ] Develop user interaction features (discover, follow, favorite channels).
-- [ ] Introduce subscription model for additional channels.
-
-### Phase 2: Advanced Features
-- [ ] Add social features: comments, likes, and shares.
-- [ ] Build community-driven playlists and trending sections.
-- [ ] Develop analytics dashboards for premium users.
-
-### Phase 3: Live Streaming and Event Tools
-- [ ] Enable live audio streaming with real-time analytics.
-- [ ] Create the event booking system with calendar integration.
-- [ ] Add notifications and reminders for events.
-- [ ] Develop the ticketing system with QR codes and payment integration.
-
-### Deployment and Optimization
-- [ ] Deploy backend on a reliable hosting platform.
-- [ ] Set up CI/CD pipelines for smooth deployments.
-- [ ] Optimize frontend for performance and mobile responsiveness.
-- [ ] Implement caching and CDN for faster load times.

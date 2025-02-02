@@ -17,8 +17,6 @@ class MediaController extends Controller
         try {
             $request->validate([
                 'media_file' => 'required|file|mimes:mp3,mpeg,mp4,mov,avi,flv|max:20480', // 20MB max
-                'channel_ids' => 'array', // Validate channel_ids as an array
-                'channel_ids.*' => 'exists:channels,id', // Each channel_id must exist in the channels table
             ]);
         } catch (\Exception $e) {
             Log::error('File upload error: ' . $e->getMessage());
@@ -87,18 +85,6 @@ class MediaController extends Controller
             'file_path' => $path, // Store the file path
         ]);
 
-        // Associate the media with the channels
-        $channelIds = $request->input('channel_ids');
-        foreach ($channelIds as $channelId) {
-            DB::table('channel_media')->insert([
-                'channel_id' => $channelId,
-                'media_id' => $mediaRecord->id,
-                'active' => 'active', // Default value
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
         return response()->json($mediaRecord, 201);
     }
 
@@ -146,5 +132,15 @@ class MediaController extends Controller
         }
 
         return response()->json(['message' => 'Channels attached successfully.'], 200);
+    }
+
+    public function show(Media $media)
+    {
+        // Check if media is private and user is not authorized
+        if ($media->public === 'private' && !auth()->check()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return $media;
     }
 } 

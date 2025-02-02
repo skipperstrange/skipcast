@@ -28,4 +28,14 @@ class Media extends Model
         'filename',
         'file_path',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($media) {
+            // Delete associated channel_media entries
+            $media->channels()->detach();
+        });
+    }
 } 

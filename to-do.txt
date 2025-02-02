@@ -1,0 +1,77 @@
+## Overview Checklist and To-Do
+
+### Phase 1: Core Functionality
+- [x] Set up secure user authentication and registration.
+- [x] Build the channel creation interface and playlist generator.
+- [x] Implement channel management features (On Air/Off Air, playlist controls).
+- [x] Integrate Liquidsoap or Icecast for audio streaming.
+- [x] Develop user interaction features (discover, follow, favorite channels).
+- [x] Introduce subscription model for additional channels.
+
+### Phase 2: Advanced Features
+- [ ] Add social features: comments, likes, and shares.
+- [ ] Build community-driven playlists and trending sections.
+- [ ] Develop analytics dashboards for premium users.
+
+### Phase 3: Live Streaming and Event Tools
+- [ ] Enable live audio streaming with real-time analytics.
+- [ ] Create the event booking system with calendar integration.
+- [ ] Add notifications and reminders for events.
+- [ ] Develop the ticketing system with QR codes and payment integration.
+
+### Deployment and Optimization
+- [ ] Deploy backend on a reliable hosting platform.
+- [ ] Set up CI/CD pipelines for smooth deployments.
+- [ ] Optimize frontend for performance and mobile responsiveness.
+- [ ] Implement caching and CDN for faster load times.
+
+# To-Do List
+
+## Authentication
+- [x] Implement user registration and login
+- [x] Add social authentication (Google, Facebook)
+- [x] Implement JWT-based authentication
+- [x] Add logout functionality
+- [x] Implement role-based access control (user, dj)
+
+## Channels
+- [x] Create channel model and migration
+- [x] Implement channel creation, update, and deletion
+- [x] Add privacy settings (public, private)
+- [x] Implement channel state management (on, off)
+- [x] Add genre support for channels
+- [x] Implement media listing for channels with privacy checks
+- [x] Allow channel owners to access private media
+
+## Media
+- [x] Create media model and migration
+- [x] Implement media upload and management
+- [x] Add privacy settings for media (public, private)
+- [x] Implement media genre support
+- [x] Allow media owners to access private media
+- [x] Add media attachment to channels
+
+## Genres
+- [x] Create genre model and migration
+- [x] Implement genre seeding
+- [x] Add genre support for channels and media
+- [x] Implement genre-based filtering
+
+## API Documentation
+- [x] Add Swagger documentation for all endpoints
+- [x] Update Postman collection with new endpoints
+- [x] Document privacy and access rules
+
+## Testing
+- [x] Write unit tests for authentication
+- [x] Write unit tests for channel management
+- [x] Write unit tests for media management
+- [x] Write integration tests for API endpoints
+
+## Future Features
+- [ ] Implement playlist functionality
+- [ ] Add media search and filtering
+- [ ] Implement user following and notifications
+- [ ] Add analytics for channels and media
+
+

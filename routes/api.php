@@ -37,6 +37,12 @@ Route::get('/channels', [ChannelController::class, 'index'])
 Route::get('/channels/{channel}', [ChannelController::class, 'show'])
     ->name('channels.show');
 
+Route::get('/channels/{channel:slug}', [ChannelController::class, 'showWithMediaAndUser'])->name('channels.showWithMediaAndUser');
+
+// Public Routes (accessible to all users)
+Route::get('/channels/{channel}/media', [ChannelController::class, 'listMedia']);
+Route::get('/media/{media}', [MediaController::class, 'show']);
+
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth Routes
@@ -60,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
     Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
+
 });
 
 // Debugging route
