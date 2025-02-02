@@ -52,4 +52,24 @@ class ChannelControllerTest extends TestCase
             ->assertJsonFragment(['id' => $publicMedia->id])
             ->assertJsonFragment(['id' => $privateMedia->id]);
     }
+
+    public function getStreamUrls(Channel $channel)
+    {
+        // Get the host and port from the environment variables
+        $host = env('LIQUIDSOAP_HOST');
+        $port = env('LIQUIDSOAP_PORT');
+
+        // Construct the stream URLs based on the channel's privacy
+        $publicStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PUBLIC_MOUNT');
+        $privateStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PRIVATE_MOUNT');
+
+        // Return the appropriate URL based on the channel's privacy
+        if ($channel->privacy === 'public') {
+            return response()->json(['stream_url' => $publicStreamUrl]);
+        } elseif ($channel->privacy === 'private' && auth()->check() && auth()->id() === $channel->user_id) {
+            return response()->json(['stream_url' => $privateStreamUrl]);
+        } else {
+            return response()->json(['error' => 'Unauthorized to access this stream'], 403);
+        }
+    }
 } 

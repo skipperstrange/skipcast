@@ -12,15 +12,16 @@ class CreateChannelMediaTable extends Migration
     public function up(): void
     {
         Schema::create('channel_media', function (Blueprint $table) {
-            $table->id(); // Auto-incrementing ID
-            $table->bigInteger('channel_id')->unsigned()->index(); // Foreign key for channels
-            $table->bigInteger('media_id')->unsigned()->index(); // Foreign key for media
-            $table->foreign('channel_id')->references('id')->on('channels')->onDelete('cascade'); // Foreign key constraint
-            $table->foreign('media_id')->references('id')->on('media')->onDelete('cascade'); // Foreign key constraint
+            $table->bigIncrements('id'); // Use bigIncrements for the primary key
+            $table->bigInteger('channel_id')->unsigned(); // Added column name
+            $table->bigInteger('media_id')->unsigned();  // Added column name
             $table->enum('active', ['active', 'inactive'])->default('active'); // Status of the association
-            $table->unsignedInteger('list_order')->nullable()->default(0); // Auto-incrementing order
+            $table->integer('list_order')->unsigned()->nullable()->default(0);
             $table->timestamps(); // Created at and updated at timestamps
             $table->softDeletes(); // Add soft deletes
+
+            $table->foreign('channel_id')->references('id')->on('channels')->onDelete('cascade');
+            $table->foreign('media_id')->references('id')->on('media')->onDelete('cascade');
         });
     }
 

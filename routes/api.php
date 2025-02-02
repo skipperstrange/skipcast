@@ -42,6 +42,7 @@ Route::get('/channels/{channel:slug}', [ChannelController::class, 'showWithMedia
 // Public Routes (accessible to all users)
 Route::get('/channels/{channel}/media', [ChannelController::class, 'listMedia']);
 Route::get('/media/{media}', [MediaController::class, 'show']);
+Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -60,12 +61,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/channels/{channel}/state', 'updateState')
             ->middleware('can:manage-state,channel')
             ->name('channels.update-state');
+        Route::post('/channels/{channel}/stream/start', 'startStream')->name('channels.startStream');
+        Route::post('/channels/{channel}/stream/stop', 'stopStream')->name('channels.stopStream');
+        Route::get('/channels/{channel}/stream-url', 'getStreamUrls')->name('channels.streamUrl');
     });
 
     // Protected Media Routes
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
-    Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
 
 });
 

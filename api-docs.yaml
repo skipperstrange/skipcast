@@ -310,8 +310,7 @@ paths:
                     $ref: '#/components/schemas/PaginationMeta'
 
     post:
-      tags:
-        - Channels
+      tags: [Channels]
       summary: Create a new channel
       security:
         - bearerAuth: []
@@ -323,17 +322,20 @@ paths:
               type: object
               required:
                 - name
-                - category
+                - privacy
               properties:
                 name:
                   type: string
                 description:
                   type: string
-                category:
-                  type: string
                 privacy:
                   type: string
-                  enum: [private, public]
+                  enum: [public, private]
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach to the channel
       responses:
         201:
           description: Channel created successfully
@@ -666,4 +668,207 @@ paths:
               schema:
                 $ref: '#/components/schemas/Media'
         403:
-          description: Unauthorized access to private media 
+          description: Unauthorized access to private media
+
+  /channels/{channel}/genres:
+    post:
+      tags: [Channels]
+      summary: Attach genres to a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach
+      responses:
+        200:
+          description: Genres attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+
+  /media:
+    post:
+      tags: [Media]
+      summary: Create a new media
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - public
+              properties:
+                title:
+                  type: string
+                public:
+                  type: string
+                  enum: [public, private]
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach to the media
+      responses:
+        201:
+          description: Media created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /media/{media}/genres:
+    post:
+      tags: [Media]
+      summary: Attach genres to a media
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach
+      responses:
+        200:
+          description: Genres attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /channels/{channel}/stream-url:
+    get:
+      tags:
+        - Channels
+      summary: Get Stream URL
+      description: Retrieve the stream URL for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream URL retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stream_url:
+                    type: string
+        '403':
+          description: Unauthorized to access this stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /channels/{channel}/stream/start:
+    post:
+      tags:
+        - Channels
+      summary: Start Stream
+      description: Start streaming for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Failed to start stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /channels/{channel}/stream/stop:
+    post:
+      tags:
+        - Channels
+      summary: Stop Stream
+      description: Stop streaming for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '200':
+          description: Stream is not running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string 

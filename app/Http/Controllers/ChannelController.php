@@ -173,6 +173,9 @@ class ChannelController extends Controller
                 ->update(['list_order' => $item['order']]);
         }
 
+        // Update the stream configuration after changing the order
+        $this->updateStreamConfiguration($channel);
+
         return response()->json(['message' => 'Media order updated successfully.']);
     }
 
@@ -204,5 +207,179 @@ class ChannelController extends Controller
                 "total" => $media->total(),
             ]
         ]);
+    }
+
+    public function getStreamConfiguration(Channel $channel)
+    {
+        // Check if the channel is public
+        if ($channel->privacy === 'private' && !auth()->check()) {
+            return response()->json(['error' => 'Unauthorized to access this channel'], 403);
+        }
+
+        // Retrieve media associated with the channel
+        $mediaItems = $channel->media()->orderBy('list_order')->get();
+
+        // Filter media based on privacy
+        $filteredMediaItems = $mediaItems->filter(function ($media) {
+            // Allow public media for all users
+            if ($media->public === 'public') {
+                return true;
+            }
+
+            // Allow private media only for the owner
+            return auth()->check() && auth()->id() === $media->user_id;
+        });
+
+        // Generate Liquidsoap configuration based on privacy
+        $liquidsoapConfig = $this->generateLiquidsoapConfig($filteredMediaItems, $channel->privacy);
+
+        return response()->json(['config' => $liquidsoapConfig]);
+    }
+
+    private function generateLiquidsoapConfig($mediaItems, $privacy)
+    {
+        $config = "## Liquidsoap Stream Configuration\n\n";
+        $config .= "## Define the audio sources\n";
+
+        foreach ($mediaItems as $media) {
+            $filePath = storage_path("app/media/audio/{$media->filename}"); // Adjust the path as necessary
+            $config .= "source_{$media->id} = single(\"{$filePath}\")\n";
+        }
+
+        $config .= "\n## Define the playlist\n";
+        $config .= "playlist = [";
+
+        foreach ($mediaItems as $media) {
+            $config .= "source_{$media->id}, ";
+        }
+
+        $config = rtrim($config, ', ') . "]\n\n"; // Remove trailing comma
+
+        // Output configuration based on privacy
+        if ($privacy === 'public') {
+            $config .= "## Public Output configuration\n";
+            $config .= "output.icecast(%mp3, host = \"" . env('LIQUIDSOAP_HOST') . "\", port = " . env('LIQUIDSOAP_PORT') . ", password = \"" . env('LIQUIDSOAP_PASSWORD') . "\", mount = \"" . env('LIQUIDSOAP_PUBLIC_MOUNT') . "\", playlist)\n";
+        } else {
+            $config .= "## Private Output configuration\n";
+            $config .= "output.icecast(%mp3, host = \"" . env('LIQUIDSOAP_HOST') . "\", port = " . env('LIQUIDSOAP_PORT') . ", password = \"" . env('LIQUIDSOAP_PASSWORD') . "\", mount = \"" . env('LIQUIDSOAP_PRIVATE_MOUNT') . "\", playlist)\n";
+        }
+
+        return $config;
+    }
+
+    private function isStreamRunning(Channel $channel): bool
+    {
+        // Check if the Liquidsoap process is running for this channel
+        $output = [];
+        $returnVar = 0;
+        exec("pgrep -f 'liquidsoap.*channel_{$channel->id}'", $output, $returnVar);
+        
+        return $returnVar === 0; // If the command returns 0, the process is running
+    }
+
+    public function startStream(Channel $channel)
+    {
+        // Check if the stream is already running
+        if ($this->isStreamRunning($channel)) {
+            return response()->json(['message' => 'Stream is already running'], 200);
+        }
+
+        // Save the Liquidsoap configuration with the appropriate folder
+        $configPath = $this->saveLiquidsoapConfig($this->generateLiquidsoapConfig($channel->media, $channel->privacy), $channel);
+
+        // Execute Liquidsoap on the remote server
+        $remoteHost = env('LIQUIDSOAP_HOST'); // The IP or domain of the remote server
+        $remoteUser = env('LIQUIDSOAP_USER'); // The SSH username
+        $command = "ssh {$remoteUser}@{$remoteHost} 'liquidsoap {$configPath}' > /dev/null 2>&1 &"; // Run in the background
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            return response()->json(['error' => 'Failed to start stream'], 500);
+        }
+
+        // Update channel status to 'on air'
+        $channel->update(['state' => 'on']);
+
+        return response()->json(['message' => 'Stream started successfully']);
+    }
+
+    public function stopStream(Channel $channel)
+    {
+        // Check if the stream is running
+        if (!$this->isStreamRunning($channel)) {
+            return response()->json(['message' => 'Stream is not running'], 200);
+        }
+
+        // Stop the Liquidsoap process using the channel slug
+        exec("pkill -f 'liquidsoap.*{$channel->slug}'");
+
+        // Update channel status to 'off air'
+        $channel->update(['state' => 'off']);
+
+        return response()->json(['message' => 'Stream stopped successfully']);
+    }
+
+    private function saveLiquidsoapConfig($config, $channel)
+    {
+        // Determine the storage path based on privacy
+        $folder = $channel->privacy === 'public' ? 'public' : 'private';
+        $filePath = storage_path("app/liquidsoap/{$folder}/{$channel->slug}.liq");
+
+        // Ensure the directory exists
+        if (!file_exists(dirname($filePath))) {
+            mkdir(dirname($filePath), 0755, true);
+        }
+
+        // Save the configuration to the file
+        file_put_contents($filePath, $config);
+        return $filePath;
+    }
+
+    public function getStreamUrls(Channel $channel)
+    {
+        // Get the host and port from the environment variables
+        $host = env('LIQUIDSOAP_HOST');
+        $port = env('LIQUIDSOAP_PORT');
+
+        // Construct the stream URLs based on the channel's privacy
+        $publicStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PUBLIC_MOUNT');
+        $privateStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PRIVATE_MOUNT');
+
+        // Return the appropriate URL based on the channel's privacy
+        if ($channel->privacy === 'public') {
+            return response()->json(['stream_url' => $publicStreamUrl]);
+        } elseif ($channel->privacy === 'private' && auth()->check() && auth()->id() === $channel->user_id) {
+            return response()->json(['stream_url' => $privateStreamUrl]);
+        } else {
+            return response()->json(['error' => 'Unauthorized to access this stream'], 403);
+        }
+    }
+
+    public function addMedia(Request $request, Channel $channel)
+    {
+        // Logic to add media...
+        
+        // Update the stream configuration after adding media
+        $this->updateStreamConfiguration($channel);
+    }
+
+    public function deleteMedia(Channel $channel, $mediaId)
+    {
+        // Logic to delete media...
+        
+        // Update the stream configuration after deleting media
+        $this->updateStreamConfiguration($channel);
+    }
+
+    private function updateStreamConfiguration(Channel $channel)
+    {
+        // Regenerate the Liquidsoap configuration
+        $configPath = $this->saveLiquidsoapConfig($this->generateLiquidsoapConfig($channel->media, $channel->privacy), $channel);
+
+        // Optionally restart the stream if it's running
+        if ($this->isStreamRunning($channel)) {
+            exec("pkill -f 'liquidsoap.*{$channel->slug}'"); // Stop the current stream
+            $this->startStream($channel); // Restart with the updated configuration
+        }
     }
 } 
