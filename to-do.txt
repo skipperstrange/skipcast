@@ -75,3 +75,7 @@
 - [ ] Add analytics for channels and media
 
 
+## User tracking and logging
+- [ ] Implement user activity tracking. (login, logout, register, etc) - table user_activity
+- [ ] Implement reposrting system for reported media, users, channels, etc. - table reports
+- [ ] 
