@@ -27,6 +27,12 @@ class Media extends Model
         'cover_art',
         'filename',
         'file_path',
+        'media_type',
+        'resolution',
+        'codec',
+        'frame_rate',
+        'aspect_ratio',
+        'bitrate',
     ];
 
     protected static function boot()
@@ -37,5 +43,20 @@ class Media extends Model
             // Delete associated channel_media entries
             $media->channels()->detach();
         });
+    }
+
+    public function isAudio()
+    {
+        return $this->media_type === 'audio';
+    }
+
+    public function isVideo()
+    {
+        return $this->media_type === 'video';
+    }
+
+    public function isImage()
+    {
+        return $this->media_type === 'image';
     }
 } 

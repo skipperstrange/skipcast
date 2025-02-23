@@ -64,12 +64,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/channels/{channel}/stream/start', 'startStream')->name('channels.startStream');
         Route::post('/channels/{channel}/stream/stop', 'stopStream')->name('channels.stopStream');
         Route::get('/channels/{channel}/stream-url', 'getStreamUrls')->name('channels.streamUrl');
+        Route::post('/channels/{channel}/genres', 'attachGenres')->name('channels.attachGenres');
     });
 
     // Protected Media Routes
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
 
+    // Attach genres to a channel
+    Route::post('/channels/{channel}/genres', [ChannelController::class, 'attachGenres'])->name('channels.attachGenres');
 });
 
 // Debugging route

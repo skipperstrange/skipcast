@@ -33,6 +33,9 @@ class ChannelController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Log the incoming request data
+       // \Log::info('Request data:', $request->all());
+
         if (auth()->user()->role !== 'dj' && auth()->user()->role !== 'admin') {
             return response()->json(['message' => 'Only DJs can create channels'], 403);
         }
@@ -53,6 +56,11 @@ class ChannelController extends Controller
             'state' => 'off',
             'active' => true
         ]);
+
+        // Attach genres if provided
+        if ($request->has('genre_ids')) {
+            $channel->genres()->sync($request->genre_ids);
+        }
 
         return response()->json($channel, 201);
     }
@@ -97,17 +105,26 @@ class ChannelController extends Controller
         return response()->json(null, 204);
     }
 
-    public function updateState(Request $request, Channel $channel): JsonResponse
+    public function updateState(Request $request, Channel $channel)
     {
-        $this->authorize('manageState', $channel);
-
         $request->validate([
-            'state' => ['required', 'in:on,off']
+            'state' => 'required|string|in:on,off',
         ]);
 
+        // Update the channel state
         $channel->update(['state' => $request->state]);
 
-        return response()->json($channel);
+        // Start the stream if the state is set to 'on'
+        if ($request->state === 'on') {
+            return $this->startStream($channel);
+        }
+
+        // If the state is set to 'off', stop the stream
+        if ($request->state === 'off') {
+            return $this->stopStream($channel);
+        }
+
+        return response()->json(['message' => 'Channel state updated successfully']);
     }
 
     public function showWithMediaAndUser($slug, Request $request)
@@ -381,5 +398,23 @@ class ChannelController extends Controller
             exec("pkill -f 'liquidsoap.*{$channel->slug}'"); // Stop the current stream
             $this->startStream($channel); // Restart with the updated configuration
         }
+    }
+
+    public function attachGenres(Request $request, Channel $channel)
+    {
+        \Log::info('Attaching genres to channel:', [
+            'channel_id' => $channel->id,
+            'genre_ids' => $request->genre_ids,
+        ]);
+
+        $request->validate([
+            'genre_ids' => 'required|array',
+            'genre_ids.*' => 'exists:genres,id', // Ensure each genre ID exists in the genres table
+        ]);
+
+        // Attach genres to the channel
+        $channel->genres()->sync($request->genre_ids);
+
+        return response()->json(['message' => 'Genres attached successfully.'], 200);
     }
 } 

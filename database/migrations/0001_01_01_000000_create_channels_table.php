@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->string('genre')->nullable()->default('No genre');
             
             // Streaming state (on air/off air)
             $table->enum('state', ['on', 'off'])->default('off');

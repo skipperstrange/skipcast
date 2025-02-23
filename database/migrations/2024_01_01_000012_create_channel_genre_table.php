@@ -4,12 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateChannelGenresTable extends Migration
+class CreateChannelGenreTable extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::create('channel_genres', function(Blueprint $table)
-        {
+        Schema::create('channel_genre', function (Blueprint $table) {
             $table->bigInteger('channel_id')->unsigned()->index();
             $table->integer('genre_id')->unsigned()->index();
             $table->foreign('genre_id')->references('id')->on('genres')->onDelete('cascade');
@@ -20,8 +22,11 @@ class CreateChannelGenresTable extends Migration
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        Schema::dropIfExists('channel_genres');
+        Schema::dropIfExists('channel_genre');
     }
 } 

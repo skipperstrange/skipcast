@@ -11,6 +11,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.17",
         "laravel/tinker": "^2.9",
+        "pbmedia/laravel-ffmpeg": "^8.6",
         "plutuss/getid3-laravel": "^1.1"
     },
     "require-dev": {

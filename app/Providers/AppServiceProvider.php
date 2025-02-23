@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Remove FFMpeg bindings as they're handled by the package
     }
 
     /**

@@ -159,4 +159,9 @@ class Channel extends Model
             ->withTimestamps()
             ->withPivot('list_order');
     }
+
+    public function genres()
+    {
+        return $this->belongsToMany(Genre::class, 'channel_genre'); // Ensure the pivot table name is correct
+    }
 } 
