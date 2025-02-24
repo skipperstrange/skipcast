@@ -31,6 +31,7 @@ class MediaService
     protected function runFFmpeg(array $arguments): string
     {
         $command = array_merge([$this->ffmpegPath], $arguments);
+        
         $result = Process::run(implode(' ', $command));
 
         if (!$result->successful()) {
@@ -109,19 +110,20 @@ class MediaService
         $extension = pathinfo($inputFile, PATHINFO_EXTENSION);
         $tempOutputFile = tempnam(sys_get_temp_dir(), 'audio_') . '.' . $extension;
 
-        $arguments = ['-i', $inputFile];
+        $arguments = [
+            '-i', $inputFile,
+            '-c', 'copy'
+        ];
 
         // Add metadata arguments
         foreach ($metadata as $key => $value) {
             $arguments[] = '-metadata';
-            $arguments[] = "{$key}={$value}";
+            $arguments[] = "{$key}=\"{$value}\"";  // Quote the values
         }
 
-        // Add output format and file
-        $arguments = array_merge($arguments, [
-            '-c', 'copy',  // Copy without re-encoding
-            $tempOutputFile
-        ]);
+        // Add output file and force overwrite
+        $arguments[] = $tempOutputFile;
+        $arguments[] = '-y';
 
         $this->runFFmpeg($arguments);
         rename($tempOutputFile, $inputFile);
