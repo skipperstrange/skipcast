@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\MediaService;
+use App\Models\Channel;
 
 class MediaController extends Controller
 {
@@ -167,29 +168,35 @@ class MediaController extends Controller
 
     public function attachChannels(Request $request, Media $media)
     {
+        // Authorize the user to attach channels to this media
+        $this->authorize('update', $media);
+
         try {
             $request->validate([
-                'channel_ids' => 'required|array', // Validate channel_ids as an array
-                'channel_ids.*' => 'exists:channels,id', // Each channel_id must exist in the channels table
+                'channel_ids' => 'required|array',
+                'channel_ids.*' => 'exists:channels,id'
             ]);
+
+            // Attach channels to media with active status
+            foreach ($request->channel_ids as $channelId) {
+                $media->channels()->attach($channelId, [
+                    'active' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Channels attached successfully',
+                'media' => $media->load('channels')
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('Attach channels error: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to attach channels.'], 422);
+            return response()->json([
+                'error' => 'Failed to attach channels to media',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        // Associate the media with the channels
-        $channelIds = $request->input('channel_ids');
-        foreach ($channelIds as $channelId) {
-            DB::table('channel_media')->insert([
-                'channel_id' => $channelId,
-                'media_id' => $media->id,
-                'active' => 'active', // Default value
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        return response()->json(['message' => 'Channels attached successfully.'], 200);
     }
 
     public function show(Media $media)
@@ -252,5 +259,37 @@ class MediaController extends Controller
     private function getStoragePath($mediaType, $fileName)
     {
         return storage_path("app/" . env("MEDIA_{$mediaType}_PATH") . "/{$fileName}");
+    }
+
+    /**
+     * Detach channels from the media.
+     *
+     * @param Request $request
+     * @param Media $media
+     * @return JsonResponse
+     */
+    public function detachChannels(Request $request, Media $media)
+    {
+        $this->authorize('update', $media);
+
+        try {
+            $request->validate([
+                'channel_ids' => 'required|array',
+                'channel_ids.*' => 'exists:channels,id'
+            ]);
+
+            $media->channels()->detach($request->channel_ids);
+
+            return response()->json([
+                'message' => 'Channels detached successfully',
+                'media' => $media->load('channels')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to detach channels from media',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 } 

@@ -1,0 +1,160 @@
+openapi: 3.0.0
+info:
+  title: SkipCast API
+  version: 1.0.0
+  description: API documentation for SkipCast media management
+
+paths:
+  /api/channels/{channel}/media:
+    post:
+      tags:
+        - Channel Media Management
+      summary: Attach media to a channel
+      security:
+        - sanctum: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to attach
+      responses:
+        200:
+          description: Media attached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object
+
+    delete:
+      tags:
+        - Channel Media Management
+      summary: Detach media from a channel
+      security:
+        - sanctum: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to detach
+      responses:
+        200:
+          description: Media detached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object
+
+  /api/media/{media}/channels:
+    post:
+      tags:
+        - Media Channel Management
+      summary: Attach channels to a media
+      security:
+        - sanctum: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: Media ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of channel IDs to attach
+      responses:
+        200:
+          description: Channels attached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  media:
+                    type: object
+
+    delete:
+      tags:
+        - Media Channel Management
+      summary: Detach channels from a media
+      security:
+        - sanctum: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: Media ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of channel IDs to detach
+      responses:
+        200:
+          description: Channels detached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  media:
+                    type: object 

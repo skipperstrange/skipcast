@@ -597,6 +597,136 @@
           }
         }
       ]
+    },
+    {
+      "name": "Channel Media Management",
+      "item": [
+        {
+          "name": "Attach Media to Channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/channels/{{channel_id}}/media",
+              "host": ["{{base_url}}"],
+              "path": ["api", "channels", "{{channel_id}}", "media"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Detach Media from Channel",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/channels/{{channel_id}}/media",
+              "host": ["{{base_url}}"],
+              "path": ["api", "channels", "{{channel_id}}", "media"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media Channel Management",
+      "item": [
+        {
+          "name": "Attach Channels to Media",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/media/{{media_id}}/channels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "{{media_id}}", "channels"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"channel_ids\": [1, 2, 3]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Detach Channels from Media",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/media/{{media_id}}/channels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "{{media_id}}", "channels"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"channel_ids\": [1, 2, 3]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [

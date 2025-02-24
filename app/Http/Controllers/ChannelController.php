@@ -417,4 +417,73 @@ class ChannelController extends Controller
 
         return response()->json(['message' => 'Genres attached successfully.'], 200);
     }
+
+    /**
+     * Attach media to the channel.
+     */
+    public function attachMedia(Request $request, Channel $channel)
+    {
+        // Authorize the user to add media to this channel
+        $this->authorize('update', $channel);
+
+        try {
+            // Validate the request
+            $request->validate([
+                'media_ids' => 'required|array',
+                'media_ids.*' => 'exists:media,id'
+            ]);
+
+            // Attach media to channel with active status
+            foreach ($request->media_ids as $mediaId) {
+                $channel->media()->attach($mediaId, [
+                    'active' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Media attached to channel successfully',
+                'channel' => $channel->load('media')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to attach media to channel',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Detach media from the channel.
+     *
+     * @param Request $request
+     * @param Channel $channel
+     * @return JsonResponse
+     */
+    public function detachMedia(Request $request, Channel $channel)
+    {
+        $this->authorize('update', $channel);
+
+        try {
+            $request->validate([
+                'media_ids' => 'required|array',
+                'media_ids.*' => 'exists:media,id'
+            ]);
+
+            $channel->media()->detach($request->media_ids);
+
+            return response()->json([
+                'message' => 'Media detached from channel successfully',
+                'channel' => $channel->load('media')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to detach media from channel',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 } 
