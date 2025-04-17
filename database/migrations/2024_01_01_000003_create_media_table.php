@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('channelmode', ['mono', 'stereo'])->nullable();
             $table->enum('public', ['public', 'private'])->default('public');
             $table->enum('downloadable', ['yes', 'no'])->default('no');
+            $table->string('file_path')->nullable();
             $table->bigInteger('size')->default(0)->nullable();
             $table->bigInteger('views')->default(0);
             $table->bigInteger('likes')->default(0);

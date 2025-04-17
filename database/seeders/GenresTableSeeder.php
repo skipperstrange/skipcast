@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class GenresTableSeeder extends Seeder
 {
@@ -13,21 +14,30 @@ class GenresTableSeeder extends Seeder
     public function run(): void
     {
         $genres = [
-            ['genre' => 'Rock', 'slug' => 'rock'],
-            ['genre' => 'Pop', 'slug' => 'pop'],
-            ['genre' => 'Afro Pop', 'slug' => 'afro-pop'],
-            ['genre' => 'House', 'slug' => 'house'],
-            ['genre' => 'Contemporary', 'slug' => 'contemporary'],
-            ['genre' => 'Hip Hop', 'slug' => 'hip-hop'],
-            ['genre' => 'Jazz', 'slug' => 'jazz'],
-            ['genre' => 'Classical', 'slug' => 'classical'],
-            ['genre' => 'Electronic', 'slug' => 'electronic'],
-            ['genre' => 'Reggae', 'slug' => 'reggae'],
-            ['genre' => 'Country', 'slug' => 'country'],
-            ['genre' => 'Blues', 'slug' => 'blues'],
-            ['genre' => 'Metal', 'slug' => 'metal'],
+            'Rock',
+            'Pop',
+            'Hip Hop',
+            'Jazz',
+            'Classical',
+            'Electronic',
+            'Reggae',
+            'Country',
+            'Blues',
+            'R&B',
+            'Metal',
+            'Folk',
+            'Punk',
+            'Indie',
+            'Latin',
         ];
 
-        DB::table('genres')->insert($genres);
+        $genreData = array_map(function ($genre) {
+            return [
+                'genre' => $genre,
+                'slug' => Str::slug(strtolower($genre))
+            ];
+        }, $genres);
+
+        DB::table('genres')->insert($genreData);
     }
 } 

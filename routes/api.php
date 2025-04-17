@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/channels/{channel}/stream/stop', 'stopStream')->name('channels.stopStream');
         Route::get('/channels/{channel}/stream-url', 'getStreamUrls')->name('channels.streamUrl');
         Route::post('/channels/{channel}/genres', 'attachGenres')->name('channels.attachGenres');
+        Route::delete('/channels/{channel}/genres', 'detachGenres')->name('channels.detachGenres');
         Route::post('/channels/{channel}/media', [ChannelController::class, 'attachMedia']);
         Route::delete('/channels/{channel}/media', [ChannelController::class, 'detachMedia']);
     });
@@ -72,6 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Protected Media Routes
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
+    Route::post('/media/{media}/genres', [MediaController::class, 'attachGenres'])->name('media.attachGenres');
+    Route::delete('/media/{media}/genres', [MediaController::class, 'detachGenres'])->name('media.detachGenres');
 
     // Attach genres to a channel
     Route::post('/channels/{channel}/genres', [ChannelController::class, 'attachGenres'])->name('channels.attachGenres');

@@ -11,4 +11,5 @@ return [
     // Application Service Providers...
     App\Providers\AppServiceProvider::class,
     App\Providers\MediaServiceProvider::class,
+    App\Providers\ChannelMediaServiceProvider::class,
 ];

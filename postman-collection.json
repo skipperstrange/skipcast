@@ -235,6 +235,38 @@
           }
         },
         {
+          "name": "Detach Genres from Channel",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"genre_ids\": [3, 4]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/channels/{{channel_id}}/genres",
+              "host": ["{{base_url}}"],
+              "path": ["api", "channels", "{{channel_id}}", "genres"]
+            }
+          }
+        },
+        {
           "name": "Get Channel",
           "request": {
             "method": "GET",
@@ -595,6 +627,38 @@
               "path": ["api", "media", "{{media_id}}", "genres"]
             }
           }
+        },
+        {
+          "name": "Detach Genres from Media",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"genre_ids\": [3, 4]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/media/{{media_id}}/genres",
+              "host": ["{{base_url}}"],
+              "path": ["api", "media", "{{media_id}}", "genres"]
+            }
+          }
         }
       ]
     },
@@ -611,6 +675,10 @@
                 "value": "application/json"
               },
               {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
               }
@@ -622,12 +690,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}"
             }
           }
         },
@@ -652,12 +715,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"media_ids\": [1, 2, 3]\n}"
             }
           }
         }

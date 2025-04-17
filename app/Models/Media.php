@@ -59,4 +59,11 @@ class Media extends Model
     {
         return $this->media_type === 'image';
     }
+
+    public function channels()
+    {
+        return $this->belongsToMany(Channel::class, 'channel_media')
+            ->withTimestamps()
+            ->withPivot('active', 'list_order'); // Include any additional pivot fields
+    }
 } 

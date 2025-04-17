@@ -79,3 +79,8 @@
 - [ ] Implement user activity tracking. (login, logout, register, etc) - table user_activity
 - [ ] Implement reposrting system for reported media, users, channels, etc. - table reports
 - [ ] 
+
+# API enhancements
+- [ ] Attch resource links to media, channels, users, etc.
+- [ ] Add pagination to media, channels listing
+- [ ] Add search functionality for media, channels, users, etc.

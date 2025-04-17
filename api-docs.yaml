@@ -704,6 +704,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Channel'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    delete:
+      tags: [Channels]
+      summary: Detach genres from a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to detach
+      responses:
+        200:
+          description: Genres detached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
 
   /media:
     post:
@@ -773,6 +851,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Media'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    delete:
+      tags: [Media]
+      summary: Detach genres from a media
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to detach
+      responses:
+        200:
+          description: Genres detached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
 
   /channels/{channel}/stream-url:
     get:
@@ -871,4 +1027,81 @@ paths:
                 type: object
                 properties:
                   message:
-                    type: string 
+                    type: string
+
+  /channels/{channel}/media:
+    post:
+      tags:
+        - Channel Media Management
+      summary: Attach media to a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to attach
+      responses:
+        '200':
+          description: Media attached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object
+
+    delete:
+      tags:
+        - Channel Media Management
+      summary: Detach media from a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to detach
+      responses:
+        '200':
+          description: Media detached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object 

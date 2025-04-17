@@ -7,10 +7,29 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
+use App\Models\Media;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Process;
+use App\Traits\HandlesApiResponses;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Services\ChannelMediaService;
+use App\Services\GenreService;
 
 class ChannelController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, HandlesApiResponses;
+
+    protected $channelMediaService;
+    protected $genreService;
+
+    public function __construct(ChannelMediaService $channelMediaService, GenreService $genreService)
+    {
+        $this->channelMediaService = $channelMediaService;
+        $this->genreService = $genreService;
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -34,7 +53,7 @@ class ChannelController extends Controller
     public function store(Request $request): JsonResponse
     {
         // Log the incoming request data
-       // \Log::info('Request data:', $request->all());
+        // \Log::info('Request data:', $request->all());
 
         if (auth()->user()->role !== 'dj' && auth()->user()->role !== 'admin') {
             return response()->json(['message' => 'Only DJs can create channels'], 403);
@@ -51,7 +70,6 @@ class ChannelController extends Controller
             'user_id' => auth()->id(),
             'name' => $request->name,
             'description' => $request->description,
-            'genre' => $request->genre,
             'privacy' => $request->privacy ?? 'public',
             'state' => 'off',
             'active' => true
@@ -59,16 +77,27 @@ class ChannelController extends Controller
 
         // Attach genres if provided
         if ($request->has('genre_ids')) {
-            $channel->genres()->sync($request->genre_ids);
+            try {
+                $this->genreService->attachToChannel($channel, $request->genre_ids);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Failed to attach genres to channel',
+                    'message' => $e->getMessage()
+                ], 400); // Return a 400 Bad Request status
+            }
         }
 
-        return response()->json($channel, 201);
+        return response()->json([
+            'message' => 'Channel created successfully',
+            'channel' => $channel->load('genres')
+        ]);
     }
 
     public function show(Channel $channel): JsonResponse
     {
+        // If channel is not active, treat it as not found
         if (!$channel->active) {
-            return response()->json(['message' => 'Channel not found'], 404);
+            throw new ModelNotFoundException("Channel not found or inactive", 404);
         }
 
         // Load relationships if requested
@@ -402,20 +431,49 @@ class ChannelController extends Controller
 
     public function attachGenres(Request $request, Channel $channel)
     {
-        \Log::info('Attaching genres to channel:', [
-            'channel_id' => $channel->id,
-            'genre_ids' => $request->genre_ids,
-        ]);
+        $this->authorize('update', $channel);
 
         $request->validate([
             'genre_ids' => 'required|array',
-            'genre_ids.*' => 'exists:genres,id', // Ensure each genre ID exists in the genres table
+            'genre_ids.*' => 'exists:genres,id'
         ]);
 
-        // Attach genres to the channel
-        $channel->genres()->sync($request->genre_ids);
+        // Use the GenreService to attach genres
+        $this->genreService->attachToChannel($channel, $request->genre_ids);
 
-        return response()->json(['message' => 'Genres attached successfully.'], 200);
+        return response()->json([
+            'message' => 'Genres attached successfully',
+            'channel' => $channel->load('genres')
+        ]);
+    }
+
+    /**
+     * Detach genres from a channel.
+     */
+    public function detachGenres(Request $request, Channel $channel)
+    {
+        $this->authorize('update', $channel);
+
+        try {
+            $request->validate([
+                'genre_ids' => 'required|array',
+                'genre_ids.*' => 'exists:genres,id'
+            ]);
+
+            // Use the GenreService to detach genres
+            $this->genreService->detachFromChannel($channel, $request->genre_ids);
+
+            return response()->json([
+                'message' => 'Genres detached successfully',
+                'channel' => $channel->load('genres')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to detach genres from channel',
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     /**
@@ -423,24 +481,15 @@ class ChannelController extends Controller
      */
     public function attachMedia(Request $request, Channel $channel)
     {
-        // Authorize the user to add media to this channel
         $this->authorize('update', $channel);
 
         try {
-            // Validate the request
             $request->validate([
                 'media_ids' => 'required|array',
                 'media_ids.*' => 'exists:media,id'
             ]);
 
-            // Attach media to channel with active status
-            foreach ($request->media_ids as $mediaId) {
-                $channel->media()->attach($mediaId, [
-                    'active' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
+            $this->channelMediaService->attachMedia($channel, $request->media_ids);
 
             return response()->json([
                 'message' => 'Media attached to channel successfully',
@@ -451,7 +500,7 @@ class ChannelController extends Controller
             return response()->json([
                 'error' => 'Failed to attach media to channel',
                 'message' => $e->getMessage()
-            ], 500);
+            ], 400);
         }
     }
 
@@ -472,7 +521,7 @@ class ChannelController extends Controller
                 'media_ids.*' => 'exists:media,id'
             ]);
 
-            $channel->media()->detach($request->media_ids);
+            $this->channelMediaService->detachMedia($channel, $request->media_ids);
 
             return response()->json([
                 'message' => 'Media detached from channel successfully',

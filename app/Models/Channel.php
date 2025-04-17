@@ -157,7 +157,7 @@ class Channel extends Model
     {
         return $this->belongsToMany(Media::class, 'channel_media')
             ->withTimestamps()
-            ->withPivot('list_order');
+            ->withPivot('active', 'list_order');
     }
 
     public function genres()
