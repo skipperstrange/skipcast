@@ -125,7 +125,6 @@ class MediaController extends Controller
 
     public function update(Request $request, Media $media)
     {
-        // Authorize the user to update the media
         $this->authorize('update', $media);
 
         try {
@@ -177,89 +176,43 @@ class MediaController extends Controller
     {
         $this->authorize('update', $media);
 
-        $request->validate([
-            'channel_ids' => 'required|array',
-            'channel_ids.*' => 'exists:channels,id' // Validate that each channel ID exists
-        ]);
+        try {
+            $request->validate([
+                'channel_ids' => 'required|array',
+                'channel_ids.*' => 'exists:channels,id'
+            ]);
 
-        // Use the service to attach channels
-        $this->channelMediaService->attachMedia($media, $request->channel_ids);
+            // Get channels and check ownership
+            $channels = Channel::whereIn('id', $request->channel_ids)->get();
+            
+            foreach ($channels as $channel) {
+                // Only allow if:
+                // 1. User owns the channel AND
+                // 2. (Media is public OR user owns the media)
+                if (!($channel->user_id === auth()->id() && 
+                    ($media->public === 'public' || $media->user_id === auth()->id()))) {
+                    return response()->json([
+                        'error' => 'Unauthorized',
+                        'message' => "Cannot attach media to channel: {$channel->name}. You can only manage media in your own channels."
+                    ], 403);
+                }
+            }
 
-        return response()->json([
-            'message' => 'Channels attached successfully',
-            'media' => $media->load('channels')
-        ]);
-    }
+            $media->channels()->attach($request->channel_ids);
 
-    public function show(Media $media)
-    {
-        // Check if media is private and user is not authorized
-        if ($media->public === 'private' && !auth()->check()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json([
+                'message' => 'Channels attached successfully',
+                'media' => $media->load('channels')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to attach channels to media',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        return $media;
     }
 
-    public function convertMedia(Request $request, Media $media)
-    {
-        // Update the input and output paths for video files
-        $inputFile = storage_path("app/" . env('MEDIA_VIDEO_PATH') . "/{$media->filename}"); // Input path for video
-        $outputFile = storage_path("app/" . env('MEDIA_AUDIO_PATH') . "{$media->filename}.mp4"); // Change to video directory
-
-        // Use the MediaService to convert the video
-        $this->mediaService->convertVideoMedia($inputFile, $outputFile, 'mp4'); // Ensure the format is correct
-
-        return response()->json(['message' => 'Media converted successfully.']);
-    }
-
-    public function analyze(Request $request, Media $media)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'file' => 'required|file', // Assuming you are analyzing a file
-        ]);
-
-        // Use the MediaService to analyze the media
-        $analysisResult = $this->mediaService->analyzeMedia(storage_path("app/{$media->file_path}"));
-
-        return response()->json($analysisResult);
-    }
-
-    public function updateCoverArt(Request $request, Media $media)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'cover_art' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Validate image file
-        ]);
-
-        // Generate a unique filename for the cover art
-        $extension = $request->file('cover_art')->getClientOriginalExtension();
-        $coverArtFileName = "{$media->filename}.{$extension}"; // Use media filename
-        $coverArtPath = storage_path("app/" . env('MEDIA_COVERART_PATH') . "/{$coverArtFileName}");
-
-        // Store the uploaded cover art image
-        $request->file('cover_art')->move(storage_path('app/' . env('MEDIA_COVERART_PATH')), $coverArtFileName);
-
-        // Update the media record with the new cover art path
-        $media->cover_art = env('MEDIA_COVERART_PATH') . "/{$coverArtFileName}";
-        $media->save();
-
-        return response()->json(['message' => 'Cover art updated successfully.', 'cover_art' => $media->cover_art]);
-    }
-
-    private function getStoragePath($mediaType, $fileName)
-    {
-        return storage_path("app/" . env("MEDIA_{$mediaType}_PATH") . "/{$fileName}");
-    }
-
-    /**
-     * Detach channels from the media.
-     *
-     * @param Request $request
-     * @param Media $media
-     * @return JsonResponse
-     */
     public function detachChannels(Request $request, Media $media)
     {
         $this->authorize('update', $media);
@@ -301,27 +254,90 @@ class MediaController extends Controller
         }
     }
 
-    public function attachGenres(Request $request, Media $media)
+    public function show(Media $media)
+    {
+        $this->authorize('view', $media);
+        return $media;
+    }
+
+    public function convertMedia(Request $request, Media $media)
+    {
+        // Update the input and output paths for video files
+        $inputFile = storage_path("app/" . env('MEDIA_VIDEO_PATH') . "/{$media->filename}"); // Input path for video
+        $outputFile = storage_path("app/" . env('MEDIA_AUDIO_PATH') . "{$media->filename}.mp4"); // Change to video directory
+
+        // Use the MediaService to convert the video
+        $this->mediaService->convertVideoMedia($inputFile, $outputFile, 'mp4'); // Ensure the format is correct
+
+        return response()->json(['message' => 'Media converted successfully.']);
+    }
+
+    public function analyze(Request $request, Media $media)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'file' => 'required|file', // Assuming you are analyzing a file
+        ]);
+
+        // Use the MediaService to analyze the media
+        $analysisResult = $this->mediaService->analyzeMedia(storage_path("app/{$media->file_path}"));
+
+        return response()->json($analysisResult);
+    }
+
+    public function updateCoverArt(Request $request, Media $media)
     {
         $this->authorize('update', $media);
 
         $request->validate([
-            'genre_ids' => 'required|array',
-            'genre_ids.*' => 'exists:genres,id'
+            'cover_art' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Use the GenreService to attach genres
-        $this->genreService->attachToMedia($media, $request->genre_ids);
+        try {
+            $path = $this->mediaService
+                         ->updateCoverArt($media, $request->file('cover_art'));
 
-        return response()->json([
-            'message' => 'Genres attached successfully',
-            'media' => $media->load('genres')
-        ]);
+            return response()->json([
+                'message'   => 'Cover art updated successfully.',
+                'cover_art' => $path,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Failed to update cover art',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
-    /**
-     * Detach genres from a media.
-     */
+    private function getStoragePath($mediaType, $fileName)
+    {
+        return storage_path("app/" . env("MEDIA_{$mediaType}_PATH") . "/{$fileName}");
+    }
+
+    public function attachGenres(Request $request, Media $media)
+    {
+        $this->authorize('update', $media);
+
+        try {
+            $request->validate([
+                'genre_ids' => 'required|array',
+                'genre_ids.*' => 'exists:genres,id'
+            ]);
+
+            $this->genreService->attachToMedia($media, $request->genre_ids);
+
+            return response()->json([
+                'message' => 'Genres attached successfully',
+                'media' => $media->load('genres')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to attach genres to media',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
     public function detachGenres(Request $request, Media $media)
     {
         $this->authorize('update', $media);
@@ -332,19 +348,95 @@ class MediaController extends Controller
                 'genre_ids.*' => 'exists:genres,id'
             ]);
 
-            // Use the GenreService to detach genres
             $this->genreService->detachFromMedia($media, $request->genre_ids);
 
             return response()->json([
                 'message' => 'Genres detached successfully',
                 'media' => $media->load('genres')
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to detach genres from media',
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function destroy(Media $media)
+    {
+        $this->authorize('delete', $media);
+        
+        // Soft delete the media
+        $media->delete();
+        
+        return response()->json(null, 204);
+    }
+
+    public function trashed(Request $request)
+    {
+        $media = Media::onlyTrashed()
+            ->where('user_id', auth()->id())
+            ->paginate(15);
+
+        return response()->json($media);
+    }
+
+    public function viewTrashed(Media $media)
+    {
+        $this->authorize('viewTrashed', $media);
+
+        // Check if the media is actually trashed
+        if (!$media->trashed()) {
+            return response()->json([
+                'error' => 'Media not found in trash',
+                'message' => 'The specified media is not in the trash'
+            ], 404);
+        }
+
+        // Load relationships
+        $media->load(['channels', 'genres']);
+
+        return response()->json([
+            'data' => $media
+        ]);
+    }
+
+    public function restore(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:media,id'
+        ]);
+
+        $restored = [];
+        $failed = [];
+
+        foreach ($request->ids as $id) {
+            try {
+                $media = Media::onlyTrashed()->find($id);
+                
+                if (!$media) {
+                    $failed[] = $id;
+                    continue;
+                }
+
+                // Check if user is authorized to restore this media
+                if (!$this->authorize('restore', $media)) {
+                    $failed[] = $id;
+                    continue;
+                }
+
+                $media->restore();
+                $restored[] = $id;
+            } catch (\Exception $e) {
+                $failed[] = $id;
+            }
+        }
+
+        return response()->json([
+            'message' => 'Media restoration completed',
+            'restored' => $restored,
+            'failed' => $failed
+        ]);
     }
 } 

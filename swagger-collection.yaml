@@ -1,8 +1,11 @@
-openapi: 3.0.0
+SkipCast API Documentation 1.0 Beta
 info:
   title: SkipCast API
   description: API documentation for SkipCast streaming platform
   version: 1.0.0
+  contact:
+    name: Skipcast Support
+    email: support@skipcast.com
 
 servers:
   - url: http://localhost:8000/api
@@ -303,9 +306,9 @@ paths:
                 type: object 
                 properties:
                   data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Channel'
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
                   meta:
                     $ref: '#/components/schemas/PaginationMeta'
 
@@ -1104,4 +1107,378 @@ paths:
                   message:
                     type: string
                   channel:
-                    type: object 
+                    type: object
+
+  /channels/trash/view:
+    get:
+      tags:
+        - Channels
+      summary: View trashed channels
+      description: |
+        Get a paginated list of all soft-deleted channels for the current user.
+        
+        ## Response
+        Returns a paginated list of channels with their metadata.
+        
+        ## Permissions
+        - Only returns channels owned by the authenticated user
+        - Requires authentication
+        
+        ## Pagination
+        Results are paginated with 15 items per page by default.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of trashed channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /channels/trash/view/{channel}:
+    get:
+      tags:
+        - Channels
+      summary: View specific trashed channel
+      description: |
+        Get detailed information about a specific soft-deleted channel.
+        
+        ## Response
+        Returns the channel with its metadata, media, and genres.
+        
+        ## Permissions
+        - Only accessible by the channel owner
+        - Requires authentication
+        
+        ## Error Cases
+        - Returns 404 if channel is not found in trash
+        - Returns 403 if user is not the owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the trashed channel to view
+      responses:
+        200:
+          description: Trashed channel details with media
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Channel'
+                      - type: object
+                        properties:
+                          media:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized to view this channel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        404:
+          description: Channel not found or not in trash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /channels/trash/restore:
+    post:
+      tags:
+        - Channels
+      summary: Restore multiple channels
+      description: |
+        Restore multiple soft-deleted channels.
+        
+        ## Request
+        Provide an array of channel IDs to restore.
+        
+        ## Response
+        Returns information about successfully restored and failed items.
+        
+        ## Permissions
+        - Only allows restoring channels owned by the authenticated user
+        - Requires authentication
+        
+        ## Error Handling
+        - Invalid IDs are included in the failed array
+        - Unauthorized items are included in the failed array
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of channel IDs to restore
+      responses:
+        200:
+          description: Channels restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  restored:
+                    type: array
+                    items:
+                      type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/{media}:
+    delete:
+      tags:
+        - Media
+      summary: Delete media
+      description: Soft delete a media item
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media to delete
+      responses:
+        204:
+          description: Media deleted successfully
+        403:
+          description: Unauthorized to delete this media
+        404:
+          description: Media not found
+
+  /media/trash/view:
+    get:
+      tags:
+        - Media
+      summary: View trashed media
+      description: |
+        Get a paginated list of all soft-deleted media items for the current user.
+        
+        ## Response
+        Returns a paginated list of media items with their metadata and relationships.
+        
+        ## Permissions
+        - Only returns media items owned by the authenticated user
+        - Requires authentication
+        
+        ## Pagination
+        Results are paginated with 15 items per page by default.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of trashed media items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/trash/view/{media}:
+    get:
+      tags:
+        - Media
+      summary: View specific trashed media
+      description: |
+        Get detailed information about a specific soft-deleted media item.
+        
+        ## Response
+        Returns the media item with its metadata, channels, and genres.
+        
+        ## Permissions
+        - Only accessible by the media owner
+        - Requires authentication
+        
+        ## Error Cases
+        - Returns 404 if media is not found in trash
+        - Returns 403 if user is not the owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the trashed media item
+      responses:
+        200:
+          description: Trashed media details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized to view this media
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        404:
+          description: Media not found in trash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/trash/restore:
+    post:
+      tags:
+        - Media
+      summary: Restore trashed media
+      description: |
+        Restore multiple soft-deleted media items.
+        
+        ## Request
+        Provide an array of media IDs to restore.
+        
+        ## Response
+        Returns information about successfully restored and failed items.
+        
+        ## Permissions
+        - Only allows restoring media owned by the authenticated user
+        - Requires authentication
+        
+        ## Error Handling
+        - Invalid IDs are included in the failed array
+        - Unauthorized items are included in the failed array
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to restore
+      responses:
+        200:
+          description: Media restoration results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  restored:
+                    type: array
+                    items:
+                      type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string 

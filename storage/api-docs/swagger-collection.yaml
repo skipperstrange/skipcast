@@ -1,0 +1,1484 @@
+SkipCast API Documentation 1.0 Beta
+info:
+  title: SkipCast API
+  description: API documentation for SkipCast streaming platform
+  version: 1.0.0
+  contact:
+    name: Skipcast Support
+    email: support@skipcast.com
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.skipcast.com
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, dj]
+        avatar:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+        state:
+          type: string
+          enum: [on, off]
+        active:
+          type: string
+          enum: [active, inactive, trash]
+        privacy:
+          type: string
+          enum: [private, public]
+        views:
+          type: integer
+        likes:
+          type: integer
+        max_listeners:
+          type: integer
+        current_listeners:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        to:
+          type: integer
+        total:
+          type: integer
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        album:
+          type: string
+        year:
+          type: string
+        artist:
+          type: string
+        public:
+          type: string
+          enum: [public, private]
+        downloadable:
+          type: string
+          enum: [yes, no]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+paths:
+  /register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+                - role
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, dj]
+      responses:
+        201:
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /auth/{provider}:
+    get:
+      tags:
+        - Authentication
+      summary: Redirect to social provider
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+            enum: [google, facebook]
+      responses:
+        302:
+          description: Redirect to provider
+
+  /auth/{provider}/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Handle social provider callback
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+            enum: [google, facebook]
+      responses:
+        200:
+          description: Social authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+
+  /channels:
+    get:
+      tags:
+        - Channels
+      summary: List channels
+      description: Get a paginated list of active channels
+      parameters:
+        - in: query
+          name: genre
+          schema:
+            type: string
+          description: Filter by genre
+        - in: query
+          name: privacy
+          schema:
+            type: string
+            enum: [public, private]
+          description: Filter by privacy setting
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search in name and description
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Field to sort by
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort direction
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            default: 15
+          description: Items per page
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Channels]
+      summary: Create a new channel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - privacy
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                privacy:
+                  type: string
+                  enum: [public, private]
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach to the channel
+      responses:
+        201:
+          description: Channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+
+  /channels/{channelId}:
+    get:
+      tags:
+        - Channels
+      summary: Get channel details
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: string
+          description: Channel ID or slug
+        - in: query
+          name: with
+          schema:
+            type: string
+          description: Comma-separated list of relationships to include
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        404:
+          description: Channel not found
+
+    put:
+      tags:
+        - Channels
+      summary: Update channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                privacy:
+                  type: string
+                  enum: [private, public]
+      responses:
+        200:
+          description: Channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+
+    delete:
+      tags:
+        - Channels
+      summary: Delete channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Channel deleted successfully
+
+  /channels/{id}/state:
+    put:
+      tags:
+        - Channels
+      summary: Update channel streaming state
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - state
+              properties:
+                state:
+                  type: string
+                  enum: [on, off]
+      responses:
+        200:
+          description: Channel state updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+
+  /media/upload:
+    post:
+      tags:
+        - Media
+      summary: Upload media file
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - media_file
+              properties:
+                media_file:
+                  type: string
+                  format: binary
+                  description: The media file to upload (audio/video)
+      responses:
+        201:
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        422:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /media/{media}:
+    put:
+      tags:
+        - Media
+      summary: Update media details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                album:
+                  type: string
+                year:
+                  type: string
+                artist:
+                  type: string
+                public:
+                  type: string
+                  enum: [public, private]
+                downloadable:
+                  type: string
+                  enum: [yes, no]
+      responses:
+        200:
+          description: Media updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        404:
+          description: Media not found
+        403:
+          description: Unauthorized to update media
+
+  /channels/{channel_slug}:
+    get:
+      summary: Get Channel with Media and User
+      description: Retrieve a channel along with its associated media and user.
+      parameters:
+        - in: path
+          name: channel_slug
+          required: true
+          type: string
+          description: The slug of the channel to retrieve.
+        - in: query
+          name: with
+          required: false
+          type: string
+          description: Include related user information (set to 'user').
+      responses:
+        '200':
+          description: Channel retrieved successfully.
+        '404':
+          description: Channel not found.
+
+  /media/{media}/channels:
+    post:
+      tags: [Media]
+      summary: Attach media to channels
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        200:
+          description: Media attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /test:
+    get:
+      tags: [Test]
+      summary: Test API connection
+      responses:
+        200:
+          description: API is working
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /channels/{channel}/media:
+    get:
+      tags: [Channels]
+      summary: List media for a channel
+      description: |
+        List media for a channel. 
+        If channel is private, authentication is required.
+        Public media is accessible to all users.
+        Channel owners can access all media, including private.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number for pagination
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        403:
+          description: Unauthorized access to private channel
+
+  /media/{media}:
+    get:
+      tags: [Media]
+      summary: Get media details
+      description: |
+        Get details of a media item. 
+        If media is private, authentication is required.
+        Media owners can access their own private media.
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized access to private media
+
+  /channels/{channel}/genres:
+    post:
+      tags: [Channels]
+      summary: Attach genres to a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach
+      responses:
+        200:
+          description: Genres attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    delete:
+      tags: [Channels]
+      summary: Detach genres from a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to detach
+      responses:
+        200:
+          description: Genres detached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media:
+    post:
+      tags: [Media]
+      summary: Create a new media
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - public
+              properties:
+                title:
+                  type: string
+                public:
+                  type: string
+                  enum: [public, private]
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach to the media
+      responses:
+        201:
+          description: Media created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /media/{media}/genres:
+    post:
+      tags: [Media]
+      summary: Attach genres to a media
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to attach
+      responses:
+        200:
+          description: Genres attached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    delete:
+      tags: [Media]
+      summary: Detach genres from a media
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - genre_ids
+              properties:
+                genre_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: List of genre IDs to detach
+      responses:
+        200:
+          description: Genres detached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        403:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /channels/{channel}/stream-url:
+    get:
+      tags:
+        - Channels
+      summary: Get Stream URL
+      description: Retrieve the stream URL for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream URL retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stream_url:
+                    type: string
+        '403':
+          description: Unauthorized to access this stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /channels/{channel}/stream/start:
+    post:
+      tags:
+        - Channels
+      summary: Start Stream
+      description: Start streaming for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Failed to start stream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /channels/{channel}/stream/stop:
+    post:
+      tags:
+        - Channels
+      summary: Stop Stream
+      description: Stop streaming for a specific channel.
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the channel
+      responses:
+        '200':
+          description: Stream stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '200':
+          description: Stream is not running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /channels/{channel}/media:
+    post:
+      tags:
+        - Channel Media Management
+      summary: Attach media to a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to attach
+      responses:
+        '200':
+          description: Media attached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object
+
+    delete:
+      tags:
+        - Channel Media Management
+      summary: Detach media from a channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: Channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to detach
+      responses:
+        '200':
+          description: Media detached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  channel:
+                    type: object
+
+  /channels/trash/view:
+    get:
+      tags:
+        - Channels
+      summary: View trashed channels
+      description: |
+        Get a paginated list of all soft-deleted channels for the current user.
+        
+        ## Response
+        Returns a paginated list of channels with their metadata.
+        
+        ## Permissions
+        - Only returns channels owned by the authenticated user
+        - Requires authentication
+        
+        ## Pagination
+        Results are paginated with 15 items per page by default.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of trashed channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /channels/trash/view/{channel}:
+    get:
+      tags:
+        - Channels
+      summary: View specific trashed channel
+      description: |
+        Get detailed information about a specific soft-deleted channel.
+        
+        ## Response
+        Returns the channel with its metadata, media, and genres.
+        
+        ## Permissions
+        - Only accessible by the channel owner
+        - Requires authentication
+        
+        ## Error Cases
+        - Returns 404 if channel is not found in trash
+        - Returns 403 if user is not the owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: channel
+          required: true
+          schema:
+            type: integer
+          description: The ID of the trashed channel to view
+      responses:
+        200:
+          description: Trashed channel details with media
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Channel'
+                      - type: object
+                        properties:
+                          media:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized to view this channel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        404:
+          description: Channel not found or not in trash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /channels/trash/restore:
+    post:
+      tags:
+        - Channels
+      summary: Restore multiple channels
+      description: |
+        Restore multiple soft-deleted channels.
+        
+        ## Request
+        Provide an array of channel IDs to restore.
+        
+        ## Response
+        Returns information about successfully restored and failed items.
+        
+        ## Permissions
+        - Only allows restoring channels owned by the authenticated user
+        - Requires authentication
+        
+        ## Error Handling
+        - Invalid IDs are included in the failed array
+        - Unauthorized items are included in the failed array
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of channel IDs to restore
+      responses:
+        200:
+          description: Channels restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  restored:
+                    type: array
+                    items:
+                      type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/{media}:
+    delete:
+      tags:
+        - Media
+      summary: Delete media
+      description: Soft delete a media item
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the media to delete
+      responses:
+        204:
+          description: Media deleted successfully
+        403:
+          description: Unauthorized to delete this media
+        404:
+          description: Media not found
+
+  /media/trash/view:
+    get:
+      tags:
+        - Media
+      summary: View trashed media
+      description: |
+        Get a paginated list of all soft-deleted media items for the current user.
+        
+        ## Response
+        Returns a paginated list of media items with their metadata and relationships.
+        
+        ## Permissions
+        - Only returns media items owned by the authenticated user
+        - Requires authentication
+        
+        ## Pagination
+        Results are paginated with 15 items per page by default.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of trashed media items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/trash/view/{media}:
+    get:
+      tags:
+        - Media
+      summary: View specific trashed media
+      description: |
+        Get detailed information about a specific soft-deleted media item.
+        
+        ## Response
+        Returns the media item with its metadata, channels, and genres.
+        
+        ## Permissions
+        - Only accessible by the media owner
+        - Requires authentication
+        
+        ## Error Cases
+        - Returns 404 if media is not found in trash
+        - Returns 403 if user is not the owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: media
+          required: true
+          schema:
+            type: integer
+          description: The ID of the trashed media item
+      responses:
+        200:
+          description: Trashed media details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Media'
+        403:
+          description: Unauthorized to view this media
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        404:
+          description: Media not found in trash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /media/trash/restore:
+    post:
+      tags:
+        - Media
+      summary: Restore trashed media
+      description: |
+        Restore multiple soft-deleted media items.
+        
+        ## Request
+        Provide an array of media IDs to restore.
+        
+        ## Response
+        Returns information about successfully restored and failed items.
+        
+        ## Permissions
+        - Only allows restoring media owned by the authenticated user
+        - Requires authentication
+        
+        ## Error Handling
+        - Invalid IDs are included in the failed array
+        - Unauthorized items are included in the failed array
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of media IDs to restore
+      responses:
+        200:
+          description: Media restoration results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  restored:
+                    type: array
+                    items:
+                      type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string 

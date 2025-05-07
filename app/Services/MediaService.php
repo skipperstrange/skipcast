@@ -7,6 +7,7 @@ use Plutuss\Facades\MediaAnalyzer;
 use App\Models\Media;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Http\UploadedFile as UploadFile;
 use RuntimeException;
 
 class MediaService
@@ -242,5 +243,25 @@ class MediaService
         }
         
         return [];
+    }
+
+
+    public function updateCoverArt(Media $media, UploadedFile $file): string
+    {
+        $extension    = $file->getClientOriginalExtension();
+        $fileName     = "{$media->filename}.{$extension}";
+        $storageDir   = storage_path("app/" . env('MEDIA_COVERART_PATH'));
+
+        if (! file_exists($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+
+        $file->move($storageDir, $fileName);
+
+        $relativePath = env('MEDIA_COVERART_PATH') . "/{$fileName}";
+        $media->cover_art = $relativePath;
+        $media->save();
+
+        return $relativePath;
     }
 }

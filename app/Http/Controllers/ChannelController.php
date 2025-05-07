@@ -74,7 +74,6 @@ class ChannelController extends Controller
             'state' => 'off',
             'active' => true
         ]);
-
         // Attach genres if provided
         if ($request->has('genre_ids')) {
             try {
@@ -255,201 +254,32 @@ class ChannelController extends Controller
         ]);
     }
 
-    public function getStreamConfiguration(Channel $channel)
-    {
-        // Check if the channel is public
-        if ($channel->privacy === 'private' && !auth()->check()) {
-            return response()->json(['error' => 'Unauthorized to access this channel'], 403);
-        }
-
-        // Retrieve media associated with the channel
-        $mediaItems = $channel->media()->orderBy('list_order')->get();
-
-        // Filter media based on privacy
-        $filteredMediaItems = $mediaItems->filter(function ($media) {
-            // Allow public media for all users
-            if ($media->public === 'public') {
-                return true;
-            }
-
-            // Allow private media only for the owner
-            return auth()->check() && auth()->id() === $media->user_id;
-        });
-
-        // Generate Liquidsoap configuration based on privacy
-        $liquidsoapConfig = $this->generateLiquidsoapConfig($filteredMediaItems, $channel->privacy);
-
-        return response()->json(['config' => $liquidsoapConfig]);
-    }
-
-    private function generateLiquidsoapConfig($mediaItems, $privacy)
-    {
-        $config = "## Liquidsoap Stream Configuration\n\n";
-        $config .= "## Define the audio sources\n";
-
-        foreach ($mediaItems as $media) {
-            $filePath = storage_path("app/media/audio/{$media->filename}"); // Adjust the path as necessary
-            $config .= "source_{$media->id} = single(\"{$filePath}\")\n";
-        }
-
-        $config .= "\n## Define the playlist\n";
-        $config .= "playlist = [";
-
-        foreach ($mediaItems as $media) {
-            $config .= "source_{$media->id}, ";
-        }
-
-        $config = rtrim($config, ', ') . "]\n\n"; // Remove trailing comma
-
-        // Output configuration based on privacy
-        if ($privacy === 'public') {
-            $config .= "## Public Output configuration\n";
-            $config .= "output.icecast(%mp3, host = \"" . env('LIQUIDSOAP_HOST') . "\", port = " . env('LIQUIDSOAP_PORT') . ", password = \"" . env('LIQUIDSOAP_PASSWORD') . "\", mount = \"" . env('LIQUIDSOAP_PUBLIC_MOUNT') . "\", playlist)\n";
-        } else {
-            $config .= "## Private Output configuration\n";
-            $config .= "output.icecast(%mp3, host = \"" . env('LIQUIDSOAP_HOST') . "\", port = " . env('LIQUIDSOAP_PORT') . ", password = \"" . env('LIQUIDSOAP_PASSWORD') . "\", mount = \"" . env('LIQUIDSOAP_PRIVATE_MOUNT') . "\", playlist)\n";
-        }
-
-        return $config;
-    }
-
-    private function isStreamRunning(Channel $channel): bool
-    {
-        // Check if the Liquidsoap process is running for this channel
-        $output = [];
-        $returnVar = 0;
-        exec("pgrep -f 'liquidsoap.*channel_{$channel->id}'", $output, $returnVar);
-        
-        return $returnVar === 0; // If the command returns 0, the process is running
-    }
-
-    public function startStream(Channel $channel)
-    {
-        // Check if the stream is already running
-        if ($this->isStreamRunning($channel)) {
-            return response()->json(['message' => 'Stream is already running'], 200);
-        }
-
-        // Save the Liquidsoap configuration with the appropriate folder
-        $configPath = $this->saveLiquidsoapConfig($this->generateLiquidsoapConfig($channel->media, $channel->privacy), $channel);
-
-        // Execute Liquidsoap on the remote server
-        $remoteHost = env('LIQUIDSOAP_HOST'); // The IP or domain of the remote server
-        $remoteUser = env('LIQUIDSOAP_USER'); // The SSH username
-        $command = "ssh {$remoteUser}@{$remoteHost} 'liquidsoap {$configPath}' > /dev/null 2>&1 &"; // Run in the background
-        exec($command, $output, $returnVar);
-
-        if ($returnVar !== 0) {
-            return response()->json(['error' => 'Failed to start stream'], 500);
-        }
-
-        // Update channel status to 'on air'
-        $channel->update(['state' => 'on']);
-
-        return response()->json(['message' => 'Stream started successfully']);
-    }
-
-    public function stopStream(Channel $channel)
-    {
-        // Check if the stream is running
-        if (!$this->isStreamRunning($channel)) {
-            return response()->json(['message' => 'Stream is not running'], 200);
-        }
-
-        // Stop the Liquidsoap process using the channel slug
-        exec("pkill -f 'liquidsoap.*{$channel->slug}'");
-
-        // Update channel status to 'off air'
-        $channel->update(['state' => 'off']);
-
-        return response()->json(['message' => 'Stream stopped successfully']);
-    }
-
-    private function saveLiquidsoapConfig($config, $channel)
-    {
-        // Determine the storage path based on privacy
-        $folder = $channel->privacy === 'public' ? 'public' : 'private';
-        $filePath = storage_path("app/liquidsoap/{$folder}/{$channel->slug}.liq");
-
-        // Ensure the directory exists
-        if (!file_exists(dirname($filePath))) {
-            mkdir(dirname($filePath), 0755, true);
-        }
-
-        // Save the configuration to the file
-        file_put_contents($filePath, $config);
-        return $filePath;
-    }
-
-    public function getStreamUrls(Channel $channel)
-    {
-        // Get the host and port from the environment variables
-        $host = env('LIQUIDSOAP_HOST');
-        $port = env('LIQUIDSOAP_PORT');
-
-        // Construct the stream URLs based on the channel's privacy
-        $publicStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PUBLIC_MOUNT');
-        $privateStreamUrl = "http://{$host}:{$port}/" . env('LIQUIDSOAP_PRIVATE_MOUNT');
-
-        // Return the appropriate URL based on the channel's privacy
-        if ($channel->privacy === 'public') {
-            return response()->json(['stream_url' => $publicStreamUrl]);
-        } elseif ($channel->privacy === 'private' && auth()->check() && auth()->id() === $channel->user_id) {
-            return response()->json(['stream_url' => $privateStreamUrl]);
-        } else {
-            return response()->json(['error' => 'Unauthorized to access this stream'], 403);
-        }
-    }
-
-    public function addMedia(Request $request, Channel $channel)
-    {
-        // Logic to add media...
-        
-        // Update the stream configuration after adding media
-        $this->updateStreamConfiguration($channel);
-    }
-
-    public function deleteMedia(Channel $channel, $mediaId)
-    {
-        // Logic to delete media...
-        
-        // Update the stream configuration after deleting media
-        $this->updateStreamConfiguration($channel);
-    }
-
-    private function updateStreamConfiguration(Channel $channel)
-    {
-        // Regenerate the Liquidsoap configuration
-        $configPath = $this->saveLiquidsoapConfig($this->generateLiquidsoapConfig($channel->media, $channel->privacy), $channel);
-
-        // Optionally restart the stream if it's running
-        if ($this->isStreamRunning($channel)) {
-            exec("pkill -f 'liquidsoap.*{$channel->slug}'"); // Stop the current stream
-            $this->startStream($channel); // Restart with the updated configuration
-        }
-    }
+   
 
     public function attachGenres(Request $request, Channel $channel)
     {
         $this->authorize('update', $channel);
 
-        $request->validate([
-            'genre_ids' => 'required|array',
-            'genre_ids.*' => 'exists:genres,id'
-        ]);
+        try {
+            $request->validate([
+                'genre_ids' => 'required|array',
+                'genre_ids.*' => 'exists:genres,id'
+            ]);
 
-        // Use the GenreService to attach genres
-        $this->genreService->attachToChannel($channel, $request->genre_ids);
+            $this->genreService->attachToChannel($channel, $request->genre_ids);
 
-        return response()->json([
-            'message' => 'Genres attached successfully',
-            'channel' => $channel->load('genres')
-        ]);
+            return response()->json([
+                'message' => 'Genres attached successfully',
+                'channel' => $channel->load('genres')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to attach genres to channel',
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
-    /**
-     * Detach genres from a channel.
-     */
     public function detachGenres(Request $request, Channel $channel)
     {
         $this->authorize('update', $channel);
@@ -460,14 +290,12 @@ class ChannelController extends Controller
                 'genre_ids.*' => 'exists:genres,id'
             ]);
 
-            // Use the GenreService to detach genres
             $this->genreService->detachFromChannel($channel, $request->genre_ids);
 
             return response()->json([
                 'message' => 'Genres detached successfully',
                 'channel' => $channel->load('genres')
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to detach genres from channel',
@@ -476,9 +304,6 @@ class ChannelController extends Controller
         }
     }
 
-    /**
-     * Attach media to the channel.
-     */
     public function attachMedia(Request $request, Channel $channel)
     {
         $this->authorize('update', $channel);
@@ -490,12 +315,14 @@ class ChannelController extends Controller
             ]);
 
             $this->channelMediaService->attachMedia($channel, $request->media_ids);
+            
+            // Regenerate Liquidsoap config and playlist
+            $this->channelMediaService->saveLiquidsoapConfig($channel);
 
             return response()->json([
                 'message' => 'Media attached to channel successfully',
                 'channel' => $channel->load('media')
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to attach media to channel',
@@ -504,13 +331,6 @@ class ChannelController extends Controller
         }
     }
 
-    /**
-     * Detach media from the channel.
-     *
-     * @param Request $request
-     * @param Channel $channel
-     * @return JsonResponse
-     */
     public function detachMedia(Request $request, Channel $channel)
     {
         $this->authorize('update', $channel);
@@ -522,15 +342,105 @@ class ChannelController extends Controller
             ]);
 
             $this->channelMediaService->detachMedia($channel, $request->media_ids);
+            
+            // Regenerate Liquidsoap config and playlist
+            $this->channelMediaService->saveLiquidsoapConfig($channel);
 
             return response()->json([
                 'message' => 'Media detached from channel successfully',
                 'channel' => $channel->load('media')
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to detach media from channel',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Return the authenticated user's soft-deleted channels.
+     */
+    public function trashed(Request $request)
+    {
+        $channels = Channel::onlyTrashed()
+            ->where('user_id', auth()->id())
+            ->paginate(15);
+
+        return response()->json($channels);
+    }
+
+    public function viewTrashed(Channel $channel)
+    {
+        // Check if the channel is actually trashed
+        if (!$channel->trashed()) {
+            return response()->json([
+                'error' => 'Channel not found in trash',
+                'message' => 'The specified channel is not in the trash'
+            ], 404);
+        }
+
+        // Check if the user owns the channel
+        if ($channel->user_id !== auth()->id()) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'You do not have permission to view this channel'
+            ], 403);
+        }
+
+        // Load the media relationship
+        $channel->load('media');
+
+        return response()->json([
+            'data' => $channel
+        ]);
+    }
+
+    /**
+     * Restore soft-deleted channels by single ID or array of IDs.
+     */
+    public function restore(Request $request, $id = null)
+    {
+        try {
+            // If ID is in the URL, restore single channel
+            if ($id !== null) {
+                $channel = Channel::withTrashed()->findOrFail($id);
+                $this->authorize('restore', $channel);
+                $channel->restore();
+
+                return response()->json([
+                    'message' => 'Channel restored successfully',
+                    'channel' => $channel
+                ]);
+            }
+            
+            // Otherwise, look for IDs array in request body for bulk restore
+            $request->validate([
+                'ids' => 'required|array',
+                'ids.*' => 'exists:channels,id'
+            ]);
+            
+            $channels = [];
+            foreach ($request->ids as $channelId) {
+                $channel = Channel::withTrashed()->findOrFail($channelId);
+                $this->authorize('restore', $channel);
+                $channel->restore();
+                $channels[] = $channel;
+            }
+            
+            return response()->json([
+                'message' => count($channels) > 1 ? 
+                    'Channels restored successfully' : 
+                    'Channel restored successfully',
+                'channels' => $channels
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Channel not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to restore channel(s)',
                 'message' => $e->getMessage()
             ], 500);
         }

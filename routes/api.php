@@ -50,6 +50,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Protected Channel Routes
+    Route::get('/channels/trash/view', [ChannelController::class, 'trashed'])
+        ->name('channels.trash');
+    Route::get('/channels/trash/view/{channel}', [ChannelController::class, 'viewTrashed'])
+        ->name('channels.viewTrashed');
+    Route::post('/channel/trash/restore', [ChannelController::class, 'restore'])
+        ->name('channels.restore');
+    
     Route::controller(ChannelController::class)->group(function () {
         Route::post('/channels', 'store')->name('channels.store');
         Route::put('/channels/{channel}', 'update')
@@ -73,8 +80,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Protected Media Routes
     Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
     Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
+    Route::delete('/media/{media}', [MediaController::class, 'destroy'])
+        ->middleware('can:delete,media')
+        ->name('media.destroy');
     Route::post('/media/{media}/genres', [MediaController::class, 'attachGenres'])->name('media.attachGenres');
     Route::delete('/media/{media}/genres', [MediaController::class, 'detachGenres'])->name('media.detachGenres');
+
+    // Media Trash Routes
+    Route::get('/media/trash/view', [MediaController::class, 'trashed'])->name('media.trash');
+    Route::get('/media/trash/view/{media}', [MediaController::class, 'viewTrashed'])->name('media.viewTrashed');
+    Route::post('/media/trash/restore', [MediaController::class, 'restore'])->name('media.restore');
 
     // Attach genres to a channel
     Route::post('/channels/{channel}/genres', [ChannelController::class, 'attachGenres'])->name('channels.attachGenres');

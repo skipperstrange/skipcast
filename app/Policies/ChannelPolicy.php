@@ -30,4 +30,12 @@ class ChannelPolicy
     {
         return ($user->id === $channel->user_id && $user->role === 'dj') || $user->role === 'admin';
     }
+
+    /**
+     * Determine if the user can restore a soft-deleted channel
+     */
+    public function restore(User $user, Channel $channel): bool
+    {
+        return $user->id === $channel->user_id || $user->role === 'admin';
+    }
 } 
