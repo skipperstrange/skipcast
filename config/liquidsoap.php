@@ -27,8 +27,8 @@ return [
     // File paths
     'config_path' => env('LIQUIDSOAP_CONFIG_PATH', storage_path('app/liquidsoap')),
     'playlist_path' => env('LIQUIDSOAP_PLAYLIST_PATH', storage_path('app/playlists')),
-
-    // Mount points
-    'public_mount' => env('LIQUIDSOAP_PUBLIC_MOUNT', '/public'),
-    'private_mount' => env('LIQUIDSOAP_PRIVATE_MOUNT', '/private'),
+    'playlist_storage_path' => storage_path('app/playlists'),
+    'media_path' => env('LIQUIDSOAP_MEDIA_PATH', storage_path('app')),
+    'log_path' =>storage_path('logs/liquidsoap'),
+    
 ]; 

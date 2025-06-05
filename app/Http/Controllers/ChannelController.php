@@ -315,9 +315,13 @@ class ChannelController extends Controller
             ]);
 
             $this->channelMediaService->attachMedia($channel, $request->media_ids);
-            
+   
             // Regenerate Liquidsoap config and playlist
             $this->channelMediaService->saveLiquidsoapConfig($channel);
+
+            // Generate playlist file
+            $this->channelMediaService->generatePlaylistFile($channel);
+
 
             return response()->json([
                 'message' => 'Media attached to channel successfully',
@@ -445,4 +449,4 @@ class ChannelController extends Controller
             ], 500);
         }
     }
-} 
+}

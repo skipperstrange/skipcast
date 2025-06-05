@@ -30,7 +30,7 @@ class ChannelMediaService
         }
 
         // Attach media to the channel
-        $channel->media()->sync($mediaIds);
+        $channel->media()->attach($mediaIds);
         return true;
     }
 
@@ -56,21 +56,33 @@ class ChannelMediaService
     public function attachGenres(Channel $channel, array $genreIds): bool
     {
         // Attach genres to the channel
-        $channel->genres()->attach($genreIds);
+        $channel->genres()->sync($genreIds);
         return true;
+    }
+
+    /**
+     * Generate Liquidsoap configuration path for a channel
+     */
+    public function getLiquidsoapConfigFilePath(Channel $channel): string{
+        return config('liquidsoap.config_path') . "/{$channel->privacy}/{$channel->slug}.liq";
+    }
+
+     /**
+     * Generate Playlist configuration path for a channel
+     */
+    public function getPlaylistConfigFilePath(Channel $channel): string{
+        return config('liquidsoap.playlist_path') . "/{$channel->slug}.m3u";
     }
 
     /**
      * Generate Liquidsoap configuration file for a channel
      */
-    public function generateLiquidsoapConfig(Channel $channel): string
+    public function generateLiquidsoapConfigFile(Channel $channel, string $logLevel): string
     {
         $media = $channel->media()->orderBy('list_order')->get();
-        $playlistPath = config('liquidsoap.playlist_path') . "/{$channel->slug}.m3u";
-        
-        // Generate playlist file first
-        $this->generatePlaylistFile($channel, $media);
-        
+        $configPath=$this->getLiquidsoapConfigFilePath($channel);
+        $playlistPath = $this->getPlaylistConfigFilePath($channel);
+
         // Get configuration values
         $host = config('liquidsoap.host');
         $port = config('liquidsoap.port');
@@ -78,32 +90,41 @@ class ChannelMediaService
         $logPath = config('liquidsoap.log_path');
         $bitrate = config('liquidsoap.bitrate');
         $samplerate = config('liquidsoap.samplerate');
-        $stereo = config('liquidsoap.stereo');
-        
-        // Base configuration
+        $stereo = config('liquidsoap.stereo') ? 'true' : 'false';
+        $logPath = config('liquidsoap.log_path');
+
         $config = <<<LIQ
 #!/usr/bin/env liquidsoap
 
-# Set up logging
+# Logging
 set("log.file", true)
-set("log.file.path", "{$logPath}/{$channel->slug}.log")
-set("log.level", {$logLevel})
+#log.file.path= "{$logPath}/{$channel->slug}.log"
 
-# Input playlist
-playlist = playlist("$playlistPath")
+# Playlist source (fallible)
+playlist_source = playlist("/mnt/c/wamp64/www/skipcast/storage/app/playlists/{$channel->slug}")
 
-# Output settings
+# Timeout wrapper (3 seconds)
+#playlist_with_timeout = timeout(playlist_source, 3.0, [sine()])
+
+# Safe fallback setup — ensures Liquidsoap won't crash
+radio = fallback(track_sensitive=false, [playlist_source, sine()])
+#radio = fallback.skip( [playlist_source, sine()])
+# Fallback just in case
+#radio = fallback([playlist_with_timeout, sine()])
+
+
+# Output to Icecast
 output.icecast(
-    %mp3(
-        stereo = {$stereo},
-        bitrate = {$bitrate},
-        samplerate = {$samplerate}
-    ),
-    host = "{$host}",
-    port = {$port},
-    password = "{$password}",
-    mount = "/{$channel->slug}",
-    playlist
+  %mp3(
+    stereo = true,
+    bitrate = 128,
+    samplerate = 44100
+  ),
+  host = "{$host}",
+  port = {$port},
+  password = "{$password}",
+  mount = "/{$channel->slug}",
+  radio
 )
 LIQ;
 
@@ -144,42 +165,56 @@ LIQ;
      */
     public function generatePlaylistFile(Channel $channel, $media = null): bool
     {
-        if (!$media) {
-            $media = $channel->media()->orderBy('list_order')->get();
-        }
+        
+        $media = !$media
+        ? $channel->media()->orderBy('list_order')->get()
+        : $channel->media()->whereIn('id', $media)->orderBy('list_order')->get();
+        if ($media->isEmpty()) {
+            throw new \Exception("No media found for the channel.");
+        }            
 
+
+        $mediaFilePath=config('liquidsoap.media_path');
         $playlistContent = "#EXTM3U\n";
         $playlistContent .= "#EXTENC:UTF-8\n";
         $playlistContent .= "#EXT-X-VERSION:3\n";
         $playlistContent .= "#EXT-X-TARGETDURATION:10\n";
         $playlistContent .= "#EXT-X-MEDIA-SEQUENCE:0\n\n";
-
+        
         foreach ($media as $item) {
             $filePath = storage_path("app/" . $item->file_path);
-            if (file_exists($filePath)) {
+            
                 $playlistContent .= "#EXTINF:{$item->duration}," . $item->title . "\n";
-                $playlistContent .= $filePath . "\n\n";
-            }
+                $playlistContent .= "{$mediaFilePath}/{$item->file_path}\n\n";
         }
+       
 
         // Ensure the playlists directory exists
-        $playlistDir = config('liquidsoap.playlist_path');
+        $playlistDir = config('liquidsoap.playlist_storage_path');
+
         if (!file_exists($playlistDir)) {
             mkdir($playlistDir, 0755, true);
         }
 
         // Save the playlist file
-        $playlistPath = $playlistDir . "/{$channel->slug}.m3u";
-        return file_put_contents($playlistPath, $playlistContent) !== false;
+        $playlistFilePath = $playlistDir . "/{$channel->slug}.m3u";
+        if (file_exists($playlistFilePath)) {
+            unlink($playlistFilePath);
+        }
+        $written = file_put_contents($playlistFilePath, $playlistContent);
+        if (!$written) {
+            throw new \Exception("Failed to generate playlist file: {$playlistFilePath}");
+        }
+        return $written;
     }
 
     /**
      * Save Liquidsoap configuration file
      */
-    public function saveLiquidsoapConfig(Channel $channel): bool
+    public function saveLiquidsoapConfig(Channel $channel, string $logLevel = 'info'): bool
     {
-        $config = $this->generateLiquidsoapConfig($channel);
-        
+        $config = $this->generateLiquidsoapConfigFile($channel, $logLevel);
+
         // Ensure the liquidsoap config directory exists
         $configDir = config('liquidsoap.config_path');
         if (!file_exists($configDir)) {
@@ -187,8 +222,13 @@ LIQ;
         }
 
         // Save the config file
-        $configPath = $configDir . "/{$channel->slug}.liq";
-        return file_put_contents($configPath, $config) !== false;
+        $configFilePath = $this->getLiquidsoapConfigFilePath($channel);
+        
+        $written = file_put_contents($configFilePath, $config);
+        if (!$written) {
+            throw new \Exception("Failed to write Liquidsoap config file: {$configFilePath}");
+        }
+        return $written;
     }
 
     /**
@@ -242,4 +282,4 @@ LIQ;
 
         return true;
     }
-} 
+}

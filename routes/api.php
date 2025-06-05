@@ -95,7 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/channels/{channel}/genres', [ChannelController::class, 'attachGenres'])->name('channels.attachGenres');
 
     // Channel media management
-    Route::post('channels/{channel}/media', [MediaController::class, 'attachToChannel']);
+    Route::post('channels/{channel}/media', [ChannelController::class, 'attachMedia']);
 
     // Media channel management
     Route::post('media/{media}/channels', [MediaController::class, 'attachChannels']);

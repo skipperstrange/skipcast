@@ -172,87 +172,6 @@ class MediaController extends Controller
         }
     }
 
-    public function attachChannels(Request $request, Media $media)
-    {
-        $this->authorize('update', $media);
-
-        try {
-            $request->validate([
-                'channel_ids' => 'required|array',
-                'channel_ids.*' => 'exists:channels,id'
-            ]);
-
-            // Get channels and check ownership
-            $channels = Channel::whereIn('id', $request->channel_ids)->get();
-            
-            foreach ($channels as $channel) {
-                // Only allow if:
-                // 1. User owns the channel AND
-                // 2. (Media is public OR user owns the media)
-                if (!($channel->user_id === auth()->id() && 
-                    ($media->public === 'public' || $media->user_id === auth()->id()))) {
-                    return response()->json([
-                        'error' => 'Unauthorized',
-                        'message' => "Cannot attach media to channel: {$channel->name}. You can only manage media in your own channels."
-                    ], 403);
-                }
-            }
-
-            $media->channels()->attach($request->channel_ids);
-
-            return response()->json([
-                'message' => 'Channels attached successfully',
-                'media' => $media->load('channels')
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to attach channels to media',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function detachChannels(Request $request, Media $media)
-    {
-        $this->authorize('update', $media);
-
-        try {
-            $request->validate([
-                'channel_ids' => 'required|array',
-                'channel_ids.*' => 'exists:channels,id'
-            ]);
-
-            // Get channels and check ownership
-            $channels = Channel::whereIn('id', $request->channel_ids)->get();
-            
-            foreach ($channels as $channel) {
-                // Only allow if:
-                // 1. User owns the channel AND
-                // 2. (Media is public OR user owns the media)
-                if (!($channel->user_id === auth()->id() && 
-                    ($media->public === 'public' || $media->user_id === auth()->id()))) {
-                    return response()->json([
-                        'error' => 'Unauthorized',
-                        'message' => "Cannot detach media from channel: {$channel->name}. You can only manage media in your own channels."
-                    ], 403);
-                }
-            }
-
-            $media->channels()->detach($request->channel_ids);
-
-            return response()->json([
-                'message' => 'Channels detached successfully',
-                'media' => $media->load('channels')
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to detach channels from media',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     public function show(Media $media)
     {
@@ -439,4 +358,4 @@ class MediaController extends Controller
             'failed' => $failed
         ]);
     }
-} 
+}
