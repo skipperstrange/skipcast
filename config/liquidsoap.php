@@ -29,6 +29,17 @@ return [
     'playlist_path' => env('LIQUIDSOAP_PLAYLIST_PATH', storage_path('app/playlists')),
     'playlist_storage_path' => storage_path('app/playlists'),
     'media_path' => env('LIQUIDSOAP_MEDIA_PATH', storage_path('app')),
-    'log_path' =>storage_path('logs/liquidsoap'),
+    'log_path' => storage_path('logs/liquidsoap'),
     
-]; 
+    /*
+    |--------------------------------------------------------------------------
+    | SSH Configuration for Remote Liquidsoap Control
+    |--------------------------------------------------------------------------
+    |
+    | These settings are used when controlling Liquidsoap on a remote server.
+    |
+    */
+    'ssh_user' => env('LIQUIDSOAP_SSH_USER', 'liquidsoap'),
+    'ssh_key_path' => env('LIQUIDSOAP_SSH_KEY_PATH', storage_path('ssh/liquidsoap_rsa')),
+    
+];

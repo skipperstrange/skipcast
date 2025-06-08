@@ -15,20 +15,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register the GenreService as a singleton
-        $this->app->singleton(GenreService::class, function ($app) {
-            return new GenreService();
-        });
-
-        // Register the ChannelMediaService as a singleton
-        $this->app->singleton(ChannelMediaService::class, function ($app) {
-            return new ChannelMediaService();
-        });
-
-        // Register the MediaService as a singleton
-        $this->app->singleton(MediaService::class, function ($app) {
-            return new MediaService();
-        });
+        // Get the current server roles
+        $roles = config('server.roles', ['all']);
+        
+        // Collect all services for these roles
+        $services = collect();
+        foreach ($roles as $role) {
+            $roleServices = config("server.available_roles.{$role}.services", []);
+            $services = $services->merge($roleServices);
+        }
+        
+        // Register unique services for these roles
+        foreach ($services->unique() as $service) {
+            $this->app->singleton($service, function ($app) use ($service) {
+                return new $service();
+            });
+        }
     }
 
     /**

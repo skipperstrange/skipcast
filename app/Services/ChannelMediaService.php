@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 class ChannelMediaService
 {
     /**
-     * Attach media to a channel with permission checks
+     * Attach media to a channel with checks
      */
     public function attachMedia(Channel $channel, array $mediaIds): bool
     {
@@ -35,12 +35,12 @@ class ChannelMediaService
     }
 
     /**
-     * Detach media from a channel with permission checks
+     * Detach media from a channel using pivot IDs with permission checks
      */
-    public function detachMedia(Channel $channel, array $mediaIds): bool
+    public function detachMedia(Channel $channel, array $pivotIds): bool
     {
-        // Detach media from the channel
-        $channel->media()->detach($mediaIds);
+        // Detach media from the channel using pivot IDs
+        $channel->media()->wherePivotIn('id', $pivotIds)->detach();
         return true;
     }
 
@@ -260,26 +260,12 @@ LIQ;
     }
 
     /**
-     * Detach a media item from one or more channels, with permission checks.
+     * Detach a media item from one or more channels using pivot IDs, with permission checks.
      */
-    public function detachChannels(Media $media, array $channelIds): bool
+    public function detachChannels(Media $media, array $pivotIds): bool
     {
-        // (Optional) validate channel IDs exist, similar to attachChannels…
-
-        // Permission check same as attachChannels
-        $channels = Channel::whereIn('id', $channelIds)->get();
-        foreach ($channels as $channel) {
-            if (! (
-                $channel->user_id === Auth::id()
-                && ($media->public === 'public' || $media->user_id === Auth::id())
-            )) {
-                throw new \Exception("Cannot detach media from channel: {$channel->name}");
-            }
-        }
-
-        // Perform detach
-        $media->channels()->detach($channelIds);
-
+        // Detach media from the channels using pivot IDs
+        $media->channels()->wherePivotIn('id', $pivotIds)->detach();
         return true;
     }
 }

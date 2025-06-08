@@ -12,7 +12,11 @@
         "laravel/socialite": "^5.17",
         "laravel/tinker": "^2.9",
         "pbmedia/laravel-ffmpeg": "^8.6",
-        "plutuss/getid3-laravel": "^1.1"
+        "plutuss/getid3-laravel": "^1.1",
+        "kwn/php-rdkafka-stubs": "^2.2",
+        "phpseclib/phpseclib": "^3.0",
+        "ext-rdkafka": "*",
+        "ext-posix": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -1,0 +1,1496 @@
+{
+	"info": {
+		"_postman_id": "af67aa17-b2f1-4910-9117-406894fe076a",
+		"name": "SkipCast API",
+		"description": "Skipcast is a media streaming and management platform API. This collection provides endpoints for managing media files, channels, and user content.\n\n## Key Features\n- Media upload and management (audio, video, images)\n- Channel creation and management\n- User authentication and authorization\n- Media metadata handling\n- Trash management for soft-deleted content\n\n## Authentication\nAll endpoints require authentication using Bearer tokens. Include the token in the Authorization header:\n```\nAuthorization: Bearer <your-token>\n```\n\n## Environment Variables\n- `base_url`: Your API base URL (e.g., http://localhost:8000)\n- `token`: Your authentication token\n- `media_id`: ID of a media item for testing\n- `channel_id`: ID of a channel for testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32564303"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"Password123!\",\n    \"password_confirmation\": \"Password123!\",\n    \"role\": \"dj\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Social Auth",
+			"item": [
+				{
+					"name": "Google Auth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/auth/google",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"google"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Facebook Auth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/auth/facebook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"facebook"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Channels",
+			"item": [
+				{
+					"name": "List Channels",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels?genre=rock&privacy=public&search=music&sort=created_at&order=desc&per_page=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels"
+							],
+							"query": [
+								{
+									"key": "genre",
+									"value": "rock",
+									"description": "Filter by genre"
+								},
+								{
+									"key": "privacy",
+									"value": "public",
+									"description": "Filter by privacy setting"
+								},
+								{
+									"key": "search",
+									"value": "music",
+									"description": "Search in name and description"
+								},
+								{
+									"key": "sort",
+									"value": "created_at",
+									"description": "Sort field"
+								},
+								{
+									"key": "order",
+									"value": "desc",
+									"description": "Sort direction (asc/desc)"
+								},
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Items per page"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Channel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"My Channel\",\n    \"description\": \"A great channel\",\n    \"privacy\": \"public\",\n    \"genre_ids\": [1, 2]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Attach Genres to Channel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"genre_ids\": [3, 4]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/genres",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"genres"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Detach Genres from Channel",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/genres",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"genres"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View Trashed Channels",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/trash/view",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"trash",
+								"view"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View Specific Trashed Channel",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/trash/view/{{channel_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"trash",
+								"view",
+								"{{channel_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restore Multiple Channels",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ids\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/restore",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Channel",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_slug}}?with=user",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_slug}}"
+							],
+							"query": [
+								{
+									"key": "with",
+									"value": "user",
+									"description": "Include relationships"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Channel",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Channel\",\n    \"description\": \"Updated description\",\n    \"genre\": \"rock\",\n    \"privacy\": \"public\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Channel",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Channel State",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"state\": \"on\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/state",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"state"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Channel Media",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/media",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"media"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stream URL",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer your_token_here"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/stream-url",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"stream-url"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start Stream",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/start",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"stream",
+								"start"
+							]
+						},
+						"description": "Start streaming for a channel. This command will:\n1. Generate Liquidsoap configuration\n2. Generate playlist file\n3. Send start command via Kafka\n4. Start the Liquidsoap process\n\nThe stream will be started asynchronously, and you can check its status using the stream status endpoint."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/start"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Stream start command sent successfully\",\n    \"channel\": {\n        \"id\": 1,\n        \"name\": \"My Channel\",\n        \"slug\": \"my-channel\",\n        \"state\": \"on\"\n    }\n}"
+						},
+						{
+							"name": "Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/start"
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Failed to start stream\",\n    \"message\": \"Error details here\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Stop Stream",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/stop",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"stream",
+								"stop"
+							]
+						},
+						"description": "Stop streaming for a channel. This command will:\n1. Send stop command via Kafka\n2. Stop the Liquidsoap process\n\nThe stream will be stopped asynchronously, and you can check its status using the stream status endpoint."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/stop"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Stream stop command sent successfully\",\n    \"channel\": {\n        \"id\": 1,\n        \"name\": \"My Channel\",\n        \"slug\": \"my-channel\",\n        \"state\": \"off\"\n    }\n}"
+						},
+						{
+							"name": "Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/stop"
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Failed to stop stream\",\n    \"message\": \"Error details here\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Stream Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"stream",
+								"status"
+							]
+						},
+						"description": "Check the current status of a channel's stream. This endpoint will:\n1. Send a status check command via Kafka\n2. Check if the Liquidsoap process is running\n3. Return the current stream status\n\nThe status check is performed asynchronously, and the result will be published back through Kafka."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/status"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Stream status check initiated\",\n    \"channel\": {\n        \"id\": 1,\n        \"name\": \"My Channel\",\n        \"slug\": \"my-channel\",\n        \"state\": \"on\"\n    }\n}"
+						},
+						{
+							"name": "Error",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/channels/{{channel_id}}/stream/status"
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Failed to check stream status\",\n    \"message\": \"Error details here\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Trashed Channels",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/trashed",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"trashed"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restore Channel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/restore",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restore Multiple Channels",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ids\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/restore",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Test Routes",
+			"item": [
+				{
+					"name": "API Test",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ping",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ping",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ping"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Media Management",
+			"item": [
+				{
+					"name": "Upload Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "media_file",
+									"description": "The media file to upload (audio/video/image)",
+									"type": "file",
+									"src": "/path/to/your/media/file"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"upload"
+							]
+						},
+						"description": "Upload a new media file. The API will automatically extract metadata based on the file type.\n\n## Supported Formats\n- Audio: mp3, mpeg\n- Video: mp4, mov, avi, flv\n- Images: jpg, png\n\n## Response\nReturns the created media object with extracted metadata."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Media",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}"
+							]
+						},
+						"description": "Soft delete a media item. The item will be moved to trash and can be restored later.\n\n## Permissions\n- Only the media owner can delete the item\n- Requires authentication\n\n## Response\nReturns 204 No Content on success."
+					},
+					"response": []
+				},
+				{
+					"name": "View Trashed Media",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/media/trash/view",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"trash",
+								"view"
+							]
+						},
+						"description": "Get a paginated list of all soft-deleted media items for the current user.\n\n## Response\nReturns a paginated list of media items with their metadata.\n\n## Pagination\nResults are paginated with 15 items per page by default."
+					},
+					"response": []
+				},
+				{
+					"name": "View Specific Trashed Media",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/media/trash/view/{{media_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"trash",
+								"view",
+								"{{media_id}}"
+							]
+						},
+						"description": "Get detailed information about a specific soft-deleted media item.\n\n## Response\nReturns the media item with its metadata, channels, and genres.\n\n## Permissions\n- Only accessible by the media owner\n- Requires authentication\n\n## Error Cases\n- Returns 404 if media is not found in trash\n- Returns 403 if user is not the owner"
+					},
+					"response": []
+				},
+				{
+					"name": "Restore Multiple Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ids\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/trash/restore",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"trash",
+								"restore"
+							]
+						},
+						"description": "Restore multiple soft-deleted media items.\n\n## Request\nProvide an array of media IDs to restore.\n\n## Response\nReturns information about successfully restored and failed items.\n\n## Permissions\n- Only allows restoring media owned by the authenticated user\n- Requires authentication\n\n## Error Handling\n- Invalid IDs are included in the failed array\n- Unauthorized items are included in the failed array"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Media",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Title\",\n    \"album\": \"Updated Album\",\n    \"year\": \"2023\",\n    \"artist\": \"Updated Artist\",\n    \"public\": \"public\",\n    \"downloadable\": \"yes\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Media Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"My Media\",\n    \"public\": \"public\",\n    \"genre_ids\": [1, 2]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Attach Genres to Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"genre_ids\": [3, 4]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}/genres",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}",
+								"genres"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Detach Genres from Media",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"genre_ids\": [3, 4]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}/genres",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}",
+								"genres"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing media files including upload, update, delete, and trash operations.\n\n## Media Types\n- Audio (mp3, mpeg)\n- Video (mp4, mov, avi, flv)\n- Images (jpg, png)\n\n## Features\n- File upload with metadata extraction\n- Public/private visibility settings\n- Channel attachments\n- Genre tagging\n- Soft delete and restore functionality"
+		},
+		{
+			"name": "Channel Media Management",
+			"item": [
+				{
+					"name": "Attach Media to Channel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"media_ids\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/media",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"media"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Detach Media from Channel",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"media_ids\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/channels/{{channel_id}}/media",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"channels",
+								"{{channel_id}}",
+								"media"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Media Channel Management",
+			"item": [
+				{
+					"name": "Attach Channels to Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"channel_ids\": [1, 2, 3]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}/channels",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}",
+								"channels"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Detach Channels from Media",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"channel_ids\": [1, 2, 3]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/media/{{media_id}}/channels",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"media",
+								"{{media_id}}",
+								"channels"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "token",
+			"value": "your_auth_token_here"
+		},
+		{
+			"key": "channel_slug",
+			"value": "my-channel-a1b2c3d4"
+		},
+		{
+			"key": "media_id",
+			"value": "1"
+		},
+		{
+			"key": "channel_id",
+			"value": "1"
+		}
+	]
+}

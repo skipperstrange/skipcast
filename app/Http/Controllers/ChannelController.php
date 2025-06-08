@@ -17,6 +17,7 @@ use App\Traits\HandlesApiResponses;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Services\ChannelMediaService;
 use App\Services\GenreService;
+use App\Services\StreamService;
 
 class ChannelController extends Controller
 {
@@ -24,11 +25,16 @@ class ChannelController extends Controller
 
     protected $channelMediaService;
     protected $genreService;
+    protected $streamService;
 
-    public function __construct(ChannelMediaService $channelMediaService, GenreService $genreService)
-    {
+    public function __construct(
+        ChannelMediaService $channelMediaService, 
+        GenreService $genreService,
+        StreamService $streamService
+    ) {
         $this->channelMediaService = $channelMediaService;
         $this->genreService = $genreService;
+        $this->streamService = $streamService;
     }
 
     public function index(Request $request): JsonResponse
@@ -139,20 +145,108 @@ class ChannelController extends Controller
             'state' => 'required|string|in:on,off',
         ]);
 
-        // Update the channel state
-        $channel->update(['state' => $request->state]);
+        try {
+            // Update the channel state
+            $channel->update(['state' => $request->state]);
 
-        // Start the stream if the state is set to 'on'
-        if ($request->state === 'on') {
-            return $this->startStream($channel);
+            // Start the stream if the state is set to 'on'
+            if ($request->state === 'on') {
+                return $this->startStream($channel);
+            }
+
+            // If the state is set to 'off', stop the stream
+            if ($request->state === 'off') {
+                return $this->stopStream($channel);
+            }
+
+            return response()->json(['message' => 'Channel state updated successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update channel state',
+                'message' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        // If the state is set to 'off', stop the stream
-        if ($request->state === 'off') {
-            return $this->stopStream($channel);
+    /**
+     * Start streaming a channel
+     */
+    public function startStream(Channel $channel)
+    {
+        try {
+            // Generate Liquidsoap config and playlist
+            $this->channelMediaService->saveLiquidsoapConfig($channel);
+            $this->channelMediaService->generatePlaylistFile($channel);
+
+            // Start the stream via Kafka
+            $this->streamService->startStream($channel);
+
+            return response()->json([
+                'message' => 'Stream start command sent successfully',
+                'channel' => $channel
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to start stream', [
+                'error' => $e->getMessage(),
+                'channel' => $channel->slug
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to start stream',
+                'message' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        return response()->json(['message' => 'Channel state updated successfully']);
+    /**
+     * Stop streaming a channel
+     */
+    public function stopStream(Channel $channel)
+    {
+        try {
+            // Stop the stream via Kafka
+            $this->streamService->stopStream($channel);
+
+            return response()->json([
+                'message' => 'Stream stop command sent successfully',
+                'channel' => $channel
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to stop stream', [
+                'error' => $e->getMessage(),
+                'channel' => $channel->slug
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to stop stream',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the current status of a channel's stream
+     */
+    public function getStreamStatus(Channel $channel)
+    {
+        try {
+            $this->streamService->checkStreamStatus($channel);
+
+            return response()->json([
+                'message' => 'Stream status check initiated',
+                'channel' => $channel
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to check stream status', [
+                'error' => $e->getMessage(),
+                'channel' => $channel->slug
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to check stream status',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function showWithMediaAndUser($slug, Request $request)
