@@ -43,6 +43,8 @@ Route::get('/channels/{channel:slug}', [ChannelController::class, 'showWithMedia
 Route::get('/channels/{channel}/media', [ChannelController::class, 'listMedia']);
 Route::get('/media/{media}', [MediaController::class, 'show']);
 Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
+Route::get('/channels/{channel}/stream/status', [ChannelController::class, 'getStreamStatus'])->name('channels.streamStatus');
+Route::get('/channels/{channel}/stream-url', [ChannelController::class, 'getStreamUrls'])->name('channels.streamUrl');
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -70,8 +72,6 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('channels.update-state');
         Route::post('/channels/{channel}/stream/start', 'startStream')->name('channels.startStream');
         Route::post('/channels/{channel}/stream/stop', 'stopStream')->name('channels.stopStream');
-        Route::get('/channels/{channel}/stream/status', 'getStreamStatus')->name('channels.streamStatus');
-        Route::get('/channels/{channel}/stream-url', 'getStreamUrls')->name('channels.streamUrl');
         Route::post('/channels/{channel}/genres', 'attachGenres')->name('channels.attachGenres');
         Route::delete('/channels/{channel}/genres', 'detachGenres')->name('channels.detachGenres');
         Route::post('/channels/{channel}/media', [ChannelController::class, 'attachMedia']);

@@ -97,7 +97,7 @@ class ChannelMediaService
 #!/usr/bin/env liquidsoap
 
 # Logging
-set("log.file", true)
+#set("log.file", true)
 #log.file.path= "{$logPath}/{$channel->slug}.log"
 
 # Playlist source (fallible)
