@@ -7,16 +7,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "ext-posix": "*",
-        "ext-rdkafka": "*",
-        "kwn/php-rdkafka-stubs": "^2.2",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.17",
         "laravel/tinker": "^2.9",
         "pbmedia/laravel-ffmpeg": "^8.6",
+        "plutuss/getid3-laravel": "^1.1",
+        "kwn/php-rdkafka-stubs": "^2.2",
         "phpseclib/phpseclib": "^3.0",
-        "plutuss/getid3-laravel": "^1.1"
+        "ext-rdkafka": "*",
+        "ext-posix": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
