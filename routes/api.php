@@ -22,6 +22,10 @@ Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
 });
 
+Route::get('/ping', function () {
+    return 'pong';
+});
+
 // Authentication Routes
 Route::controller(AuthController::class)->group(function () {
     Route::post('/register', 'register');
@@ -30,21 +34,25 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('/auth/{provider}/callback', 'handleProviderCallback');
 });
 
-// Public Channel Routes with optional parameters
+// Public Channel Routes
 Route::get('/channels', [ChannelController::class, 'index'])
     ->name('channels.index');
 
 Route::get('/channels/{channel}', [ChannelController::class, 'show'])
     ->name('channels.show');
 
-Route::get('/channels/{channel:slug}', [ChannelController::class, 'showWithMediaAndUser'])->name('channels.showWithMediaAndUser');
+Route::get('/channels/{channel:slug}', [ChannelController::class, 'showWithMediaAndUser'])
+    ->name('channels.showWithMediaAndUser');
 
 // Public Routes (accessible to all users)
-Route::get('/channels/{channel}/media', [ChannelController::class, 'listMedia']);
-Route::get('/media/{media}', [MediaController::class, 'show']);
-Route::post('/media/{media}/channels', [MediaController::class, 'attachChannels'])->name('media.attachChannels');
-Route::get('/channels/{channel}/stream/status', [ChannelController::class, 'getStreamStatus'])->name('channels.streamStatus');
-Route::get('/channels/{channel}/stream-url', [ChannelController::class, 'getStreamUrls'])->name('channels.streamUrl');
+Route::get('/channels/{channel}/media', [ChannelController::class, 'listMedia'])
+    ->name('channels.listMedia');
+Route::get('/media/{media}', [MediaController::class, 'show'])
+    ->name('media.show');
+Route::get('/channels/{channel}/stream/status', [ChannelController::class, 'getStreamStatus'])
+    ->name('channels.streamStatus');
+Route::get('/channels/{channel}/stream-url', [ChannelController::class, 'getStreamUrls'])
+    ->name('channels.streamUrl');
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -70,40 +78,42 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/channels/{channel}/state', 'updateState')
             ->middleware('can:manage-state,channel')
             ->name('channels.update-state');
-        Route::post('/channels/{channel}/stream/start', 'startStream')->name('channels.startStream');
-        Route::post('/channels/{channel}/stream/stop', 'stopStream')->name('channels.stopStream');
-        Route::post('/channels/{channel}/genres', 'attachGenres')->name('channels.attachGenres');
-        Route::delete('/channels/{channel}/genres', 'detachGenres')->name('channels.detachGenres');
-        Route::post('/channels/{channel}/media', [ChannelController::class, 'attachMedia']);
-        Route::delete('/channels/{channel}/media', [ChannelController::class, 'detachMedia']);
+        Route::post('/channels/{channel}/stream/start', 'startStream')
+            ->name('channels.startStream');
+        Route::post('/channels/{channel}/stream/stop', 'stopStream')
+            ->name('channels.stopStream');
+        Route::post('/channels/{channel}/genres', 'attachGenres')
+            ->name('channels.attachGenres');
+        Route::delete('/channels/{channel}/genres', 'detachGenres')
+            ->name('channels.detachGenres');
+        Route::post('/channels/{channel}/media', 'attachMedia')
+            ->name('channels.attachMedia');
+        Route::delete('/channels/{channel}/media', 'detachMedia')
+            ->name('channels.detachMedia');
     });
 
     // Protected Media Routes
-    Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
-    Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
-    Route::delete('/media/{media}', [MediaController::class, 'destroy'])
-        ->middleware('can:delete,media')
-        ->name('media.destroy');
-    Route::post('/media/{media}/genres', [MediaController::class, 'attachGenres'])->name('media.attachGenres');
-    Route::delete('/media/{media}/genres', [MediaController::class, 'detachGenres'])->name('media.detachGenres');
+    Route::controller(MediaController::class)->group(function () {
+        Route::post('/media/upload', 'upload')->name('media.upload');
+        Route::put('/media/{media}', 'update')->name('media.update');
+        Route::delete('/media/{media}', 'destroy')
+            ->middleware('can:delete,media')
+            ->name('media.destroy');
+        Route::post('/media/{media}/genres', 'attachGenres')
+            ->name('media.attachGenres');
+        Route::delete('/media/{media}/genres', 'detachGenres')
+            ->name('media.detachGenres');
+        Route::post('/media/{media}/channels', 'attachChannels')
+            ->name('media.attachChannels');
+        Route::delete('/media/{media}/channels', 'detachChannels')
+            ->name('media.detachChannels');
+    });
 
     // Media Trash Routes
-    Route::get('/media/trash/view', [MediaController::class, 'trashed'])->name('media.trash');
-    Route::get('/media/trash/view/{media}', [MediaController::class, 'viewTrashed'])->name('media.viewTrashed');
-    Route::post('/media/trash/restore', [MediaController::class, 'restore'])->name('media.restore');
-
-    // Attach genres to a channel
-    Route::post('/channels/{channel}/genres', [ChannelController::class, 'attachGenres'])->name('channels.attachGenres');
-
-    // Channel media management
-    Route::post('channels/{channel}/media', [ChannelController::class, 'attachMedia']);
-
-    // Media channel management
-    Route::post('media/{media}/channels', [MediaController::class, 'attachChannels']);
-    Route::delete('media/{media}/channels', [MediaController::class, 'detachChannels']);
-});
-
-// Debugging route
-Route::get('/ping', function () {
-    return 'pong';
+    Route::get('/media/trash/view', [MediaController::class, 'trashed'])
+        ->name('media.trash');
+    Route::get('/media/trash/view/{media}', [MediaController::class, 'viewTrashed'])
+        ->name('media.viewTrashed');
+    Route::post('/media/trash/restore', [MediaController::class, 'restore'])
+        ->name('media.restore');
 });
