@@ -113,19 +113,20 @@ LIQUIDSOAP_SSH_KEY_PATH=/path/to/liquidsoap_rsa
 
 2. Directory Structure:
 
+The application uses the `storage/app/liquidsoap` directory by default. The following structure is expected:
+
 ```
-/var/www/liquidsoap/
-├── configs/
+storage/app/
+├── liquidsoap/
 │   ├── public/
 │   └── private/
 ├── playlists/
-├── media/
-└── pids/
+└── media/
 ```
 
-Create the required directories:
+These directories are created automatically as needed, but you can create them manually if you prefer:
 ```bash
-mkdir -p /var/www/liquidsoap/{configs/{public,private},playlists,media,pids}
+mkdir -p storage/app/{liquidsoap/{public,private},playlists,media}
 ```
 
 ## Running the Services

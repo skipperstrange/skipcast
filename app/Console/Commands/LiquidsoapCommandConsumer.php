@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\LiquidsoapCommandService;
 use App\Services\KafkaConsumerService;
+use App\Services\KafkaProducerService;
 use App\Models\Channel;
 use Illuminate\Support\Facades\Log;
 
@@ -24,30 +25,22 @@ class LiquidsoapCommandConsumer extends Command
      */
     protected $description = 'Consume Liquidsoap commands from Kafka';
 
-    /**
-     * The Liquidsoap command service instance.
-     *
-     * @var LiquidsoapCommandService
-     */
     protected $liquidsoapService;
-
-    /**
-     * The Kafka consumer service instance.
-     *
-     * @var KafkaConsumerService
-     */
     protected $kafkaConsumer;
+    protected $kafkaProducer;
 
     /**
      * Create a new command instance.
      */
     public function __construct(
         LiquidsoapCommandService $liquidsoapService,
-        KafkaConsumerService $kafkaConsumer
+        KafkaConsumerService $kafkaConsumer,
+        KafkaProducerService $kafkaProducer
     ) {
         parent::__construct();
         $this->liquidsoapService = $liquidsoapService;
         $this->kafkaConsumer = $kafkaConsumer;
+        $this->kafkaProducer = $kafkaProducer;
     }
 
     /**
@@ -62,7 +55,7 @@ class LiquidsoapCommandConsumer extends Command
 
         try {
             // Start consuming messages from the stream_commands topic
-            $this->kafkaConsumer->consume(['stream_commands']);
+            $this->kafkaConsumer->consume([config('kafka.topics.stream_commands')]);
             return 0;
         } catch (\Exception $e) {
             $this->error('Failed to consume Kafka messages: ' . $e->getMessage());
@@ -135,7 +128,7 @@ class LiquidsoapCommandConsumer extends Command
                 $this->info("Stream status for channel {$channel->slug}: {$status}");
                 
                 // Publish status back to Kafka
-                $this->kafkaConsumer->publish('stream_status', [
+                $this->kafkaProducer->publish('stream_status', [
                     'event' => 'stream_status_update',
                     'channel_slug' => $channel->slug,
                     'status' => $status,

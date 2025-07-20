@@ -21,6 +21,7 @@ return [
                 App\Services\ChannelMediaService::class,
                 App\Services\GenreService::class,
                 App\Services\MediaService::class,
+                App\Services\KafkaProducerService::class,
             ],
             'commands' => [
                 App\Console\Commands\ConsumeKafkaMessages::class,
@@ -31,6 +32,7 @@ return [
             'description' => 'Liquidsoap server handling audio streaming',
             'services' => [
                 App\Services\LiquidsoapCommandService::class,
+                App\Services\KafkaProducerService::class,
             ],
             'commands' => [
                 App\Console\Commands\LiquidsoapCommandConsumer::class,
@@ -68,6 +70,7 @@ return [
                 App\Services\MediaService::class,
                 App\Services\LiquidsoapCommandService::class,
                 App\Services\IcecastMetricsService::class,
+                App\Services\KafkaProducerService::class,
             ],
             'commands' => [
                 App\Console\Commands\ConsumeKafkaMessages::class,

@@ -16,7 +16,6 @@ return [
     'password' => env('LIQUIDSOAP_PASSWORD', 'hackme'),
 
     // Logging settings
-    'log_path' => env('LIQUIDSOAP_LOG_PATH', '/var/log/liquidsoap'),
     'log_level' => env('LIQUIDSOAP_LOG_LEVEL', 3),
 
     // Audio settings
@@ -25,11 +24,12 @@ return [
     'stereo' => env('LIQUIDSOAP_STEREO', true),
 
     // File paths
+    // Note: These paths are relative to the application's storage directory.
+    // For remote Liquidsoap servers, ensure these paths are correctly mapped.
     'config_path' => env('LIQUIDSOAP_CONFIG_PATH', storage_path('app/liquidsoap')),
     'playlist_path' => env('LIQUIDSOAP_PLAYLIST_PATH', storage_path('app/playlists')),
-    'playlist_storage_path' => storage_path('app/playlists'),
     'media_path' => env('LIQUIDSOAP_MEDIA_PATH', storage_path('app')),
-    'log_path' => storage_path('logs/liquidsoap'),
+    'log_path' => env('LIQUIDSOAP_LOG_PATH', storage_path('logs/liquidsoap')),
     
     /*
     |--------------------------------------------------------------------------

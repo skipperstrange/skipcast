@@ -15,9 +15,11 @@ return [
 
     // Topics for different event types
     'topics' => [
+        'stream_commands' => env('KAFKA_TOPIC_STREAM_COMMANDS', 'skipcast-stream-commands'),
         'stream_events' => env('KAFKA_TOPIC_STREAM_EVENTS', 'skipcast-stream-events'),
         'listener_metrics' => env('KAFKA_TOPIC_LISTENER_METRICS', 'skipcast-listener-metrics'),
         'user_interactions' => env('KAFKA_TOPIC_USER_INTERACTIONS', 'skipcast-user-interactions'),
+        'stream_status' => env('KAFKA_TOPIC_STREAM_STATUS', 'skipcast-stream-status'),
     ],
 
     // Consumer group settings
